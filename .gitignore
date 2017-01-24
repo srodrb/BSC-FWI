@@ -1,0 +1,24 @@
+<<<<<<< HEAD
+#ignore output files & executables
+*.o
+*.bin
+shot*
+*.swp
+*.intel64
+*.test
+ModelGenerator
+ScheduleGenerator
+
+#ignore logfiles
+*.log
+valgrind.*
+*.nvprof
+
+# OS X files
+._DS*
+.DS*
+
+
+#ignore output folders
+Trash
+*/Trash
