@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -l "walltime=00:05:00"
+#PBS -N "fwi.openmp"
+#PBS -l "nodes=1:ppn=16:cluster"
+#PBS -e job.err
+#PBS -o job.out
+#PBS -n
+#PBS -d .
+
+date
+source environment_sdv.sh
+
+date
+export OMP_NUM_THREADS=16
+
+
+export FWIDIR="/homec/deep/deep63/fwi"
+FWIHOME="${FWIDIR}/0_OpenMP"
+
+date
+./fwi.intel64 ../SetupParams/fwi_params.txt ../SetupParams/fwi_frequencies.txt
+
+
+date
