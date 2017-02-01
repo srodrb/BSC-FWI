@@ -15,9 +15,7 @@
  *
  * =====================================================================================
  */
-
-#ifndef _FWI_KERNEL_H_
-#define _FWI_KERNEL_H_
+#pragma once
 
 #include "fwi_propagator.h"
 
@@ -115,5 +113,3 @@ void propagate_shot ( time_d        direction,
                      integer       datalen,
                      integer       dimmz,
                      integer       dimmx);
-
-#endif /* end of _FWI_KERNEL_H_ definition */

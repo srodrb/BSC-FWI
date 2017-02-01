@@ -1,16 +1,5 @@
 #include "fwi_common.h"
 
-/* extern variables declared in the header file */
-const integer  WRITTEN_FIELDS =   12; /* >= 12.  */
-const integer  HALO           =    4; /* >= 4    */ 
-const integer  SIMD_LENGTH    =    8; /* # of real elements fitting into regs */
-const real     IT_FACTOR      = 0.02;
-const real     IO_CHUNK_SIZE  = 1024.f * 1024.f;
-
-const size_t ALIGN_INT     = 16;
-const size_t ALIGN_INTEGER = 16;
-const size_t ALIGN_REAL    = 64;
-
 int max_int( int a, int b)
 {
     return ((a >= b) ? a : b);
@@ -37,6 +26,11 @@ void read_fwi_parameters (const char *fname,
                           real *vmin,
                           real *srclen,
                           real *rcvlen,
+													int  *nshots,
+													int  *ngrads,
+													int  *ntests,
+													int  *workmem,
+													int  *slavemem,
                           char *outputfolder)
 {
     FILE *fp = safe_fopen(fname, "r", __FILE__, __LINE__ );
@@ -47,16 +41,11 @@ void read_fwi_parameters (const char *fname,
     CHECK( fscanf( fp, "%f\n", (real*) vmin   ) );
     CHECK( fscanf( fp, "%f\n", (real*) srclen ) );
     CHECK( fscanf( fp, "%f\n", (real*) rcvlen ) );
-    
-    /* these three values are not needed for the shared memory implementation */
-    int NotNeededValue;
-    CHECK( fscanf( fp, "%d\n", (int*) &NotNeededValue ) );
-    CHECK( fscanf( fp, "%d\n", (int*) &NotNeededValue ) );
-    CHECK( fscanf( fp, "%d\n", (int*) &NotNeededValue ) );
-    CHECK( fscanf( fp, "%d\n", (int*) &NotNeededValue ) );
-    CHECK( fscanf( fp, "%d\n", (int*) &NotNeededValue ) );
- 
-    /* Recover the value of the output directory path */
+    CHECK( fscanf( fp, "%d\n", (int*)  nshots  ) );
+    CHECK( fscanf( fp, "%d\n", (int*)  ngrads  ) );
+    CHECK( fscanf( fp, "%d\n", (int*)  ntests  ) );
+    CHECK( fscanf( fp, "%d\n", (int*)  workmem ) );
+    CHECK( fscanf( fp, "%d\n", (int*)  slavemem) );
     CHECK( fscanf( fp, "%s\n",  outputfolder  ) );
 
     print_debug("Len (z,x,y) (%f,%f,%f) vmin %f scrlen %f rcvlen %f outputfolder '%s'",
@@ -339,6 +328,27 @@ void __free ( void* ptr)
     free( ptr );
 };
 
+/*
+	Reads an environmental variable.
+ */
+char *read_env_variable (const char* varname)
+{	
+	char* s = getenv(varname);
+	
+	if ( s == NULL )
+	{
+		fprintf(stderr, "%s: ERROR: unable to read  %s env. var\n", __FUNCTION__, varname);
+		abort();
+	}
+
+#ifdef DEBUG
+	printf("%s: %s variable value is :%s\n", __FUNCTION__, varname, s);
+#endif
+
+	return (s);
+};
+
+
 FILE* safe_fopen(const char *filename, char *mode, char* srcfilename, int linenumber)
 {
     FILE* temp = fopen( filename, mode);
@@ -425,13 +435,13 @@ void fwi_writelog(const char *SourceFileName,
                   const char *fmt,
                   ...)
 {
-    const char LogFileName[] = "fwi.log";
+    const char LogFileName[] = "./fwi.log";
     
     FILE *fp = safe_fopen ( LogFileName, "a", __FILE__, __LINE__ );
     
     va_list args;
     va_start(args, fmt);
-    fprintf(fp, "%s:%s:%d:%s: ", MessageHeader, SourceFileName, LineNumber, FunctionName );
+    fprintf(fp, "%s :[%s:%d:%s] :: ", MessageHeader, SourceFileName, LineNumber, FunctionName );
     vfprintf(fp, fmt, args);
     fprintf(fp, "\n");
     va_end(args);

@@ -16,13 +16,11 @@
  * =====================================================================================
  */
 
-#ifndef _FWI_SCHED_H_
-#define _FWI_SCHED_H_
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "fwi_common.h"
-
 
 typedef struct{
 	integer nfreqs;
@@ -47,9 +45,4 @@ typedef struct{
 } schedule_t;
 
 void schedule_free( schedule_t S );
-
-
 schedule_t load_schedule( const char* filename ); 
-
-
-#endif /*  end of _FWI_SCHED_H_ definition */

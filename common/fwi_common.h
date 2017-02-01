@@ -15,9 +15,7 @@
  *
  * =====================================================================================
  */
-
-#ifndef _FWI_COMMON_H_
-#define _FWI_COMMON_H_
+#pragma once
 
 // When included before <stdlib.h>, solves implicit declaration of posix_memalign()
 // http://stackoverflow.com/questions/32438554/warning-implicit-declaration-of-posix-memalign
@@ -32,27 +30,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <omp.h>
-
-
-/* data types definition */
-typedef float  real;
-typedef int    integer;
+#include "fwi_constants.h"
 
 #define I "%d"     // integer printf symbol
 
 typedef enum {RTM_KERNEL, FM_KERNEL} propagator_t;
 typedef enum {FORWARD   , BACKWARD, FWMODEL}  time_d;
-
-/* simulation parameters */
-extern const integer WRITTEN_FIELDS;
-extern const integer HALO;
-extern const integer SIMD_LENGTH;
-extern const real    IT_FACTOR;
-extern const real    IO_CHUNK_SIZE;
-
-extern const size_t ALIGN_INT;
-extern const size_t ALIGN_INTEGER;
-extern const size_t ALIGN_REAL;
 
 double TOGB(size_t bytes);
 
@@ -79,6 +62,7 @@ static inline void checkErrors(const integer error, const char *filename, int li
     }
 };
 
+char *read_env_variable(const char *varname);
 FILE* safe_fopen  ( const char *filename, char *mode, char* srcfilename, int linenumber);
 void  safe_fclose ( const char *filename, FILE* stream, char* srcfilename, int linenumber);
 void  safe_fwrite ( void *ptr, size_t size, size_t nmemb, FILE *stream, char* srcfilename, int linenumber );
@@ -97,6 +81,11 @@ void read_fwi_parameters (const char *fname,
                           real *vmin,
                           real *srclen,
                           real *rcvlen,
+													int  *nshots,
+													int  *ngrads,
+													int  *ntests,
+													int  *workmem,
+													int  *slavemem,
                           char *outputfolder);
 
 void store_shot_parameters(int     shotid,
@@ -128,8 +117,8 @@ void load_shot_parameters(int     shotid,
                           real    waveletFreq);
 
 void load_freqlist (  const char*  filename,
-                            int*   nfreqs,
-                            real** freqlist );
+                      int*   nfreqs,
+                      real** freqlist );
 
 void* __malloc ( const size_t alignment, const integer size);
 void  __free   ( void *ptr );
@@ -141,12 +130,12 @@ int mkdir_p(const char *dir);
 void create_folder(const char *folder);
 
 
-#define print_error(M, ...)     fwi_writelog(__FILE__, __LINE__, __func__, "ERROR ", M, ##__VA_ARGS__)
-#define print_info(M, ...)      fwi_writelog(__FILE__, __LINE__, __func__, "INFO  ", M, ##__VA_ARGS__)
-#define print_stats(M, ...)     fwi_writelog(__FILE__, __LINE__, __func__, "STATS ", M, ##__VA_ARGS__)
+#define print_error(M, ...)    fwi_writelog(__FILE__, __LINE__, __func__, "ERROR", M, ##__VA_ARGS__)
+#define print_info(M, ...)     fwi_writelog(__FILE__, __LINE__, __func__, "INFO ", M, ##__VA_ARGS__)
+#define print_stats(M, ...)    fwi_writelog(__FILE__, __LINE__, __func__, "STATS", M, ##__VA_ARGS__)
 
-#ifdef DEBUG
-  #define print_debug(M, ...)  fwi_writelog(__FILE__, __LINE__, __func__, "DEBUG ", M, ##__VA_ARGS__)
+#if defined(DEBUG)
+  #define print_debug(M, ...)  fwi_writelog(__FILE__, __LINE__, __func__, "DEBUG", M, ##__VA_ARGS__)
 #else
   #define print_debug(M, ...)
 #endif
@@ -157,6 +146,3 @@ void fwi_writelog(const char *SourceFileName,
                   const char* MessageHeader,
                   const char *fmt,
                   ...);
-
-
-#endif // end of _FWI_COMMON_H_ definition

@@ -44,7 +44,7 @@ schedule_t load_schedule( const char* filename )
 	char filepath[pathlen];
 	sprintf(filepath, "%s/SetupParams/%s", fwipath, filename);
 
-	FILE* fschedule = fopen( filepath, "r");
+	FILE* fschedule = safe_fopen( filepath, "r", __FILE__, __LINE__);
 
 	if ( fschedule == NULL ){
 		fprintf(stderr, "Cant open scheduling file %s\n", filepath );
@@ -97,14 +97,22 @@ schedule_t load_schedule( const char* filename )
 				&S.dt[i], &S.dz[i], &S.dy[i], &S.dx[i], 
 				&S.dimmz[i], &S.dimmx[i], &S.dimmy[i], 
 				&S.ppd[i], &S.nworkers[i]);
+
+#if defined(SHARED_MEMORY_RUN)
+		if ( S.nworkers[i] != 1 ) {
+			print_error("This execution requieres more than one worker to be \
+					computed. Please check the schedule file.");
+			abort();
+		}
+#endif
 	}
 
 	/* show up a summary */
-	fprintf(stderr, "Info: number of frequencies %d, number of shots %d\n", S.nfreqs, S.nshots);
+	print_info("Info: number of frequencies %d, number of shots %d\n", S.nfreqs, S.nshots);
 
 	for( int i=0; i < S.nfreqs; i++ ) 
 	{
-		fprintf( stderr, "%f %d %d %d %f %f %f %f %d %d %d %d %d\n", 
+		print_info("%f %d %d %d %f %f %f %f %d %d %d %d %d\n", 
 				S.freq[i], S.forws[i], S.backs[i], S.stacki[i], 
 				S.dt[i], S.dz[i], S.dy[i], S.dx[i], 
 				S.dimmz[i], S.dimmx[i], S.dimmy[i], 

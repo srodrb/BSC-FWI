@@ -10,52 +10,53 @@
  *       Revision:  none
  *       Compiler:  icc
  *
- *         Author:  YOUR NAME (),
- *   Organization:
+ *         Author:  Samuel Rodriguez Bernabeu (samuel.rodriguez@bsc.es)
+ *   Organization:  Barcelona Supercomputing Center
  *
  * =====================================================================================
  */
 
+#include "fwi_sched.h"
 #include "fwi_kernel.h"
 
 
 int main(int argc, const char *argv[])
 {
+	/* 
+	 * Check input arguments
+	 */
+	if ( argc != 2 ) {
+		print_error("Invalid argument count. Schedule file is requiered.");
+		abort();
+	}
+
+	if ( argv[1] == NULL ) {
+		print_error("Invalid argument. Schedule file path is NULL");
+		abort();
+	}
+
     /* set seed for random number generator */
     srand(314);
-    
-    real lenz,lenx,leny,vmin,srclen,rcvlen;
-    char outputfolder[200];
+   
+		/* Load schedule file */
+		schedule_t S = load_schedule(argv[1]);
 
-    fprintf(stderr, "Loading parameter from %s file\n", argv[1]);
-    read_fwi_parameters( argv[1], &lenz, &lenx, &leny, &vmin, &srclen, &rcvlen, outputfolder);
-
-    /* create synthetic velocity model */
-    int nfreqs;
-    real *frequencies;
-
-    load_freqlist( argv[2], &nfreqs, &frequencies);
-
-    for(int i=0; i<nfreqs; i++)
+		/* Generate one velocity model per frequency */
+    for(int i=0; i<S.nfreqs; i++)
     {
-        real waveletFreq = frequencies[i];
-        fprintf(stderr, "Creating synthetic velocity input model for %f Hz freq\n", waveletFreq );
+        real waveletFreq   = S.freq[i];
+				integer dimmz      = S.dimmz[i];
+				integer dimmy      = S.dimmy[i];
+				integer dimmx      = S.dimmx[i];
 
-        /* compute discretization deltas, 16 == puntos por longitud de onda */
-        real dx = vmin / (16.0 * waveletFreq);
-        real dy = vmin / (16.0 * waveletFreq);
-        real dz = vmin / (16.0 * waveletFreq);
-     
-        /* number of cells along axis */
-        integer dimmz = roundup( ceil( lenz / dz ) + 2*HALO, HALO);
-        integer dimmy = roundup( ceil( leny / dy ) + 2*HALO, HALO);
-        integer dimmx = roundup( ceil( lenx / dx ) + 2*HALO, HALO);
+        print_info("Creating synthetic velocity input model for %f Hz freq", waveletFreq );
 
-        const integer numberOfCells = dimmz * dimmy * dimmx;
+				/* Compute number of cells per array */
+				const integer numberOfCells = dimmz * dimmy * dimmx;
+        print_info("Elements/array = "I"\n", numberOfCells);
 
-        fprintf(stderr, "Elements/array = "I"\n", numberOfCells);
-
-        char modelname[300];
+				/* generate complete path for output model */
+        char modelname[500];
         sprintf( modelname, "../InputModels/velocitymodel_%.2f.bin", waveletFreq );
 
         FILE* model = safe_fopen( modelname, "wb", __FILE__, __LINE__);
@@ -65,11 +66,7 @@ int main(int argc, const char *argv[])
         /* safe dummy buffer */
         for(int i = 0; i < WRITTEN_FIELDS; i++)
         {
-            /* fill the buffer with random numbers in [-1,1] interval */
-            //for(int j = 0; j < numberOfCells; j++)
-            //    buffer[j] = (rand() % 2) -1.0;     <<--- provoca NaNs en l'execucio
             set_array_to_random_real( buffer, numberOfCells );
-
             safe_fwrite( buffer, sizeof(real), numberOfCells, model, __FILE__, __LINE__);
         }
 
@@ -79,10 +76,11 @@ int main(int argc, const char *argv[])
         /*  close model file */
         safe_fclose( modelname, model, __FILE__, __LINE__);
 
-        fprintf(stderr, "Model %s created correctly\n", modelname);
+        print_info("Model %s created correctly", modelname);
     }
 
-    __free( frequencies );
-    fprintf(stderr, "End of the program\n");
+		schedule_free(S);
+
+    print_info("End of the program");
     return 0;
 }
