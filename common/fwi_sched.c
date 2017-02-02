@@ -70,7 +70,7 @@ schedule_t load_schedule( const char* filename )
 	fprintf(stderr, "Number of test iterations %d\n", S.ntests);
 
 	/* read the name of the output directory */
-	fscanf( fschedule, "%s\n", &S.outputfolder );
+	fscanf( fschedule, "%s\n", S.outputfolder );
 
 	fprintf(stderr, "Output directory path: %s\n", S.outputfolder );
 
