@@ -430,6 +430,79 @@ void load_initial_model ( const real    waveletFreq,
 };
 
 
+#if !defined(SHARED_MEMORY_RUN)
+/*
+ * This funtion is used to store both the local preconditioner and gradient
+ * fields during the kernel execution.
+ */
+void store_field (char *shotdir,
+                  const int shotid,
+									field_t type,
+                  v_t *v,
+                  const integer numberOfCells)
+{
+#ifdef DO_NOT_PERFOM_IO
+  fprintf(stderr, "Warning: We are not doing any IO here (%s)\n", __FUNCTION__);
+
+#else
+	/* create field name */
+	char fname[300];
+
+	switch ( type )
+	{
+		case ( GRADIENT ):
+		{
+			fprintf(stderr, "Storing local gradient field\n");
+			sprintf( fname, "%s/gradient_%05d.dat", shotdir, shotid );
+			break;
+		}
+		case ( PRECONDITIONER ):
+		{	
+			fprintf(stderr, "Storing local preconditioner field\n");
+			sprintf( fname, "%s/precond_%05d.dat" , shotdir, shotid );
+			break;
+		}
+		default:
+		{	
+			fprintf(stderr, "Invalid field type identificator\n");
+			abort();
+		}
+	}
+
+  FILE *ffile = safe_fopen(fname,"wb", __FILE__, __LINE__ );
+
+	double tstart=0.0, tend=0.0, iospeed=0.0;
+	tstart = dtime();
+	
+	safe_fwrite( v->tr.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->tr.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->tr.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	
+	safe_fwrite( v->tl.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->tl.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->tl.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+
+	safe_fwrite( v->br.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->br.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->br.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	
+	safe_fwrite( v->bl.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->bl.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+	safe_fwrite( v->bl.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
+
+	tend = dtime() - tstart;
+	iospeed = ((numberOfCells * sizeof(real) * 12.f) / (1024.f * 1024.f)) / tend;
+
+	fprintf(stderr, "Write field time: %lf seconds (%lf MiB/s)\n", tend, iospeed);
+  
+	if ( fclose(ffile)!=0)
+      fprintf(stderr,"Error closing file %s\n", fname);
+
+#endif
+};
+#endif
+
+
 /*
  * Saves the complete velocity field to disk.
  */
@@ -480,12 +553,10 @@ void write_snapshot(char *folder,
     iospeed_inner = (( (double) numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_inner - tstart_inner);
     iospeed_outer = (( (double) numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_outer - tstart_outer);
 
-#ifdef LOG_IO_STATS
     print_stats("Write snapshot (%lf GB)", TOGB(numberOfCells * sizeof(real) * 12));
     print_stats("\tInner time %lf seconds (%lf MB/s)", (tend_inner - tstart_inner), iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MB/s)", (tend_outer - tstart_outer), iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
-#endif
 #endif
 };
 
@@ -539,12 +610,10 @@ void read_snapshot(char *folder,
     iospeed_inner = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
     iospeed_outer = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
 
-#ifdef LOG_IO_STATS
     print_stats("Read snapshot (%lf GB)", TOGB(numberOfCells * sizeof(real) * 12));
     print_stats("\tInner time %lf seconds (%lf MiB/s)", tend_inner, iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MiB/s)", tend_outer, iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
-#endif
 #endif
 };
 
@@ -580,7 +649,8 @@ void propagate_shot(time_d        direction,
 
     for(int t=0; t < timesteps; t++)
     {
-        if( t % 10 == 0 ) print_info("Computing %d-th timestep", t);
+				/* print out some information */
+        if( t&stacki == 0 ) print_debug("Computing %d-th timestep", t);
 
         /* perform IO */
         if ( t%stacki == 0 && direction == BACKWARD) read_snapshot(folder, ntbwd-t, &v, datalen);

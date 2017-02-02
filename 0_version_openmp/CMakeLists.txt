@@ -23,7 +23,7 @@ endif()
 #   Common compilation flags, if any.
 #--------------------------------------
 # set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
-set (CMAKE_C_FLAGS "-std=c99 -fopenmp")
+set (CMAKE_C_FLAGS "-g -std=c99 -fopenmp")
 add_definitions ("-DSHARED_MEMORY_RUN")
 
 
@@ -33,11 +33,22 @@ add_definitions ("-DSHARED_MEMORY_RUN")
 option (perform-io "Perform local I/O" ON)
 
 if (perform-io)
-	add_definitions("-DLOG_IO_STATS")
-	message(STATUS "Real Input/Output is enabled. Statistics will be collected")
+	message(STATUS "Input/Output is enabled.")
 else()
-	add_definitions("-DDO_NOT_PERFORM_IO")
 	message(STATUS "Input/Output is disabled.")
+	add_definitions("-DDO_NOT_PERFORM_IO")
+endif()
+
+#--------------------------------------
+#       Configure statistics gathering
+#--------------------------------------
+option (collect-stats "Collect performance statistics" OFF)
+
+if (collect-stats AND perform-io)
+	message(STATUS "Kernel will collect performance statistics")
+	add_definitions("-DCOLLECT_STATS")
+elseif (collect-stats AND NOT perform-io)
+	message(WARNING "Kernel cant collect performance statistics, perform-io flag is disabled")
 endif()
 
 #--------------------------------------
@@ -49,7 +60,7 @@ if (use-nmve)
 	add_definitions("-DUSE_NMVE")
 	message(STATUS "NMVe devices will be used for local I/O")
 else()
-	message(STATUS "Global file system will be used for local I/O")
+	message(STATUS "GPFS will be used for local I/O")
 endif()
 
 
@@ -68,6 +79,8 @@ add_executable(fwi.bin
 	"../common/fwi_sched.c"
 	"./fwi_propagator.c")
 
+target_link_libraries(fwi.bin "-lm")
+
 install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 #--------------------------------------
 #    Create model generator utility
@@ -76,7 +89,7 @@ install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 include_directories(
 	"../common/"
 	"./")
-add_executable(modelGenerator.bin
+add_executable(generateModel.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
 	"../common/fwi_kernel.c"
@@ -84,8 +97,9 @@ add_executable(modelGenerator.bin
 	"./fwi_propagator.c"
 	"../common/fwi_generatemodel.c")
 
-set_target_properties(modelGenerator.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
-install (TARGETS modelGenerator.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
+target_link_libraries(generateModel.bin "-lm")
+set_target_properties(generateModel.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
+install (TARGETS generateModel.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 
 #--------------------------------------
 #   Create model scheduler utility
@@ -93,7 +107,7 @@ install (TARGETS modelGenerator.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 include_directories(
 	"../common/"
 	"./")
-add_executable(scheduler.bin
+add_executable(generateSchedule.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
 	"../common/fwi_kernel.c"
@@ -101,9 +115,6 @@ add_executable(scheduler.bin
 	"./fwi_propagator.c"
 	"../common/fwi_schedule.c")
 
-set_target_properties(scheduler.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
-install (TARGETS scheduler.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
-
-
-
-
+target_link_libraries(generateSchedule.bin "-lm")
+set_target_properties(generateSchedule.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
+install (TARGETS generateSchedule.bin DESTINATION "${CMAKE_SOURCE_DIR}/")

@@ -378,51 +378,53 @@ void safe_fclose ( const char *filename, FILE* stream, char* srcfilename, int li
 
 inline void safe_fwrite (void *ptr, size_t size, size_t nmemb, FILE *stream, char* srcfilename, int linenumber)
 {
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
     print_info("Warning: we are not doing any IO (called from %s).", __FUNCTION__);
 #else
     if( stream == NULL ){
         print_error("Invalid stream\n");
         abort();
     }
-    size_t res;
+    double start_t = dtime();
+    size_t res = fwrite( ptr, size, nmemb, stream);
+    double end_t = dtime() - start_t;
     
-    double start = dtime();
-    res = fwrite( ptr, size, nmemb, stream);
-    double end = dtime() - start;
-    
-    double mbytes = (1.0 * size * nmemb) / (1024.0 * 1024.0);
    
-#ifdef LOG_IO_STATS
-    print_stats("Time %lf, elements %lu bytes %lu, MB %lf MB/s %lf", end, nmemb, size*nmemb, mbytes, mbytes / end);
-#endif
-
     if( res != nmemb )
     {
         print_error("Error while fwrite (called from %s - %d)", srcfilename, linenumber );
         abort();
     }
+    
+    double mbytes = (1.0 * size * nmemb) / (1024.0 * 1024.0);
+		print_stats("WRITE Time %lf, elements %lu bytes %lu, MB %lf MB/s %lf", end_t, nmemb, size*nmemb, mbytes, mbytes / end_t);
 #endif
 };
 
 inline void safe_fread (void *ptr, size_t size, size_t nmemb, FILE *stream, char* srcfilename, int linenumber)
 {
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
     print_info("Warning: we are not doing any IO (called from %s).", __FUNCTION__);
 #else
     if( stream == NULL ){
         print_error("Invalid\n");
         abort();
     }
+    
+		double start_t = dtime();
+		size_t res = fread( ptr, size, nmemb, stream);
+		double end_t = dtime() - start_t;
 
-    size_t res = fread( ptr, size, nmemb, stream);
-
-    if( res != nmemb )
+    
+		if( res != nmemb )
     {
-        print_error("Cant fread (called from %s - %d)", srcfilename, linenumber);
+        print_error("Error while fread (called from %s - %d)", srcfilename, linenumber);
         print_error("Trying to read %lu elements, only %lu were recovered", nmemb, res);
         abort();
     }
+    
+    double mbytes = (1.0 * size * nmemb) / (1024.0 * 1024.0);
+		print_stats("READ Time %lf, elements %lu bytes %lu, MB %lf MB/s %lf", end_t, nmemb, size*nmemb, mbytes, mbytes / end_t );
 #endif
 };
 

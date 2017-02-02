@@ -17,6 +17,7 @@
  */
 
 #include "fwi_kernel.h"
+#include "fwi_offload.h"
 #include "fwi_sched.h"
 
 /*
@@ -63,7 +64,8 @@ void kernel ( propagator_t propagator,
 													&forw_steps, &back_steps, 
 													&dz, &dx, &dy, 
 													&dimmz, &dimmx, &dimmy, 
-													outputfolder);
+													outputfolder,
+													waveletFreq);
 
 		for(int worker = 0; worker < nworkers; worker++)
 		{
@@ -224,7 +226,8 @@ int main(int argc, char *argv[])
 					store_shot_parameters ( shot, &stacki, &dt, &forws, &backs, 
 																	&dz, &dx, &dy, 
 																	&dimmz, &dimmx, &dimmy, 
-																	S.outputfolder);
+																	S.outputfolder,
+																	freq);
 
 					kernel( RTM_KERNEL, freq, shot, S.outputfolder, nworkers, ppd );
 					
@@ -251,7 +254,8 @@ int main(int argc, char *argv[])
 						store_shot_parameters ( shot, &stacki, &dt, &forws, &backs, 
 																	&dz, &dx, &dy, 
 																	&dimmz, &dimmx, &dimmy, 
-																	S.outputfolder);
+																	S.outputfolder,
+																	freq);
 
 						kernel( FM_KERNEL , freq, shot, S.outputfolder, nworkers, ppd );
 				

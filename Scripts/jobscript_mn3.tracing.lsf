@@ -1,0 +1,37 @@
+#!/bin/bash
+##16+1
+#BSUB -n 1
+#BSUB -oo output.out
+#BSUB -eo output.err
+#BSUB -R "span[ptile=16]"
+#BSUB -x
+#BSUB -W 02:00
+#BSUB -q mic
+#BSUB -J fwi.2	
+ulimit -c unlimited
+
+date
+source 0_OpenMP_version/environment_mn3.sh 
+fwi_bin="./bin/fwi.intel64.impi.omp.noIO"
+threads=8
+
+export OMP_NUM_THREADS=$threads
+./extrae_configs/trace.omp.sh $fwi_bin ./SetupParams/fwi_params.txt ./SetupParams/fwi_frequencies.txt
+date
+
+${EXTRAE_HOME}/bin/mpi2prv -syn -f TRACE.mpits -e $fwi_bin -o fwi_omp.${threads}t.prv.gz
+/bin/rm -r ./set-0 TRACE.*
+
+date
+source 1_OpmSs_version/environment.sh
+
+fwi_bin="./bin/fwi.intel64.impi.ompss.taskloop"
+# Intentar imitar /gpfs/scratch/bsc15/bsc15685/offload/apps/offload.test/mn3/mn3_x2m.lsf
+export NX_SMP_THREADS=${threads}
+#export NX_ARGS="--instrument-default=omp --summary --enable-yield"
+./extrae_configs/trace.ompss.sh ./bin/fwi.intel64.impi.ompss.noIO ./SetupParams/fwi_params.txt ./SetupParams/fwi_frequencies.txt
+
+date
+
+${EXTRAE_HOME}/bin/mpi2prv -syn -f TRACE.mpits -e $fwi_bin -o fwi_ompss.${threads}t.prv.gz
+/bin/rm -r ./set-0 TRACE.*

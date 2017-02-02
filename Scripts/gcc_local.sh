@@ -1,3 +1,3 @@
 #!/bin/bash
 export CC=gcc
-export FWIDIR=$PWD
+export FWIDIR=$PWD/..

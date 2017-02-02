@@ -132,7 +132,12 @@ void create_folder(const char *folder);
 
 #define print_error(M, ...)    fwi_writelog(__FILE__, __LINE__, __func__, "ERROR", M, ##__VA_ARGS__)
 #define print_info(M, ...)     fwi_writelog(__FILE__, __LINE__, __func__, "INFO ", M, ##__VA_ARGS__)
-#define print_stats(M, ...)    fwi_writelog(__FILE__, __LINE__, __func__, "STATS", M, ##__VA_ARGS__)
+
+#if defined(COLLECT_STATS)
+	#define print_stats(M, ...)  fwi_writelog(__FILE__, __LINE__, __func__, "STATS", M, ##__VA_ARGS__)
+#else
+	#define print_stats(M, ...)
+#endif
 
 #if defined(DEBUG)
   #define print_debug(M, ...)  fwi_writelog(__FILE__, __LINE__, __func__, "DEBUG", M, ##__VA_ARGS__)

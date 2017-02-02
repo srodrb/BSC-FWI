@@ -26,14 +26,16 @@
  */
 void kernel( propagator_t propagator, real waveletFreq, int shotid, char* outputfolder, char* shotfolder)
 {
-    int stacki;
     double start_t, end_t;
+    int stacki;
     real dt,dz,dx,dy;
     integer dimmz, dimmx, dimmy, forw_steps, back_steps;
 
     load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, &dz, &dx, &dy, &dimmz, &dimmx, &dimmy, outputfolder, waveletFreq );
 
-    const integer numberOfCells = dimmz * dimmx * dimmy;
+		fprintf(stderr, "----- STACKI: %d\n", stacki);
+    
+		const integer numberOfCells = dimmz * dimmx * dimmy;
 
     /* set LOCAL integration limits */
     const integer nz0 = 0;

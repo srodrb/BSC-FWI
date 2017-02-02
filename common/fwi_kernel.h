@@ -60,6 +60,14 @@ void load_initial_model ( const real    waveletFreq,
                           v_t     *v,
                           real    *rho);
 
+#if !defined(SHARED_MEMORY_RUN)
+void store_field ( char *shotdir,
+                   const int shotid,
+									 field_t type,
+                   v_t *v,
+                   const integer numberOfCells);
+#endif
+
 void write_snapshot ( char          *folder,
                       const int     suffix,
                       v_t          *v,

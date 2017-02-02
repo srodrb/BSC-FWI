@@ -1,5 +1,4 @@
-#ifndef _FWI_PROPAGATOR_H_
-#define _FWI_PROPAGATOR_H_
+#pragma once
 
 #include "fwi_common.h"
 
@@ -408,5 +407,3 @@ void compute_component_scell_BL ( s_t             s,
                                   const offset_t _SY,
                                   const integer  dimmz,
                                   const integer  dimmx);
-
-#endif /* end of _FWI_PROPAGATOR_H_ definition */

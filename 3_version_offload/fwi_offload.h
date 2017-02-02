@@ -16,24 +16,20 @@
  * =====================================================================================
  */
 
-#ifndef _FWI_OFFLOAD_H_
-	#define _FWI_OFFLOAD_H_
+#pragma once
 	
-	#include <stdlib.h>
-	#include <stdio.h>
-	#include <mpi.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <mpi.h>
 
-	typedef struct{
-		MPI_Comm spawn_comm;
-		MPI_Comm intercomm;
-		int size;
-	} booster_alloc_t;
+typedef struct{
+	MPI_Comm spawn_comm;
+	MPI_Comm intercomm;
+	int size;
+} booster_alloc_t;
 
-	booster_alloc_t initialize_alloc_attr( MPI_Comm comm, int hosts, int pph, int offset );
+booster_alloc_t initialize_alloc_attr( MPI_Comm comm, int hosts, int pph, int offset );
 
-	booster_alloc_t allocate_slaves( int hosts );
+booster_alloc_t allocate_slaves( int hosts );
 
-	booster_alloc_t allocate_workers( int hosts, int pph, int id );
-
-
-#endif /*  end of  _FWI_OFFLOAD_H_ definition */
+booster_alloc_t allocate_workers( int hosts, int pph, int id );

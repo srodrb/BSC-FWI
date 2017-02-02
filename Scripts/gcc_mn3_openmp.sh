@@ -1,7 +1,7 @@
 #!/bin/bash
 module purge
-module load intel/16.0.0
+module load gcc/6.1.0
 module load CMAKE/2.8.12.2
 
-export CC=icc
+export CC=gcc
 export FWIDIR=$PWD/..

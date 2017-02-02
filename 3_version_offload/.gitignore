@@ -1,0 +1,8 @@
+*.pcf
+*.pvr
+*.row
+*.bin
+*.log
+cscope.*
+Results/*
+build/*
