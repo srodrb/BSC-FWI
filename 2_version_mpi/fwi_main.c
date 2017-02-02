@@ -16,6 +16,7 @@
  * =====================================================================================
  */
 #include "fwi_kernel.h"
+#include <fwi_sched.h>
 
 
 /*
@@ -185,47 +186,33 @@ int main(int argc, char* argv[])
 {
     double tstart, tend;
     tstart = dtime();
-
+		
+		/* Initialize MPI environment */
     MPI_Init ( &argc, &argv );
     int mpi_rank, subdomains;
     MPI_Comm_size( MPI_COMM_WORLD, &subdomains);
     MPI_Comm_rank( MPI_COMM_WORLD, &mpi_rank);
 
-    real lenz,lenx,leny,vmin,srclen,rcvlen;
-    char outputfolder[200];
+		/* load parameters from schedule file */
+		schedule_t S = load_schedule(argv[1]);
 
-    read_fwi_parameters( argv[1], &lenz, &lenx, &leny, &vmin, &srclen, &rcvlen, outputfolder);
-
-    const int nshots = 1;
-    const int ngrads = 1;
-    const int ntest  = 0;
-
-    int   nfreqs;
-    real *frequencies;
-
-    load_freqlist( argv[2], &nfreqs, &frequencies );
-
-    for(int i=0; i<nfreqs; i++)
+    for(int i=0; i<S.nfreqs; i++)
     {
         /* Process one frequency at a time */
-        real waveletFreq = frequencies[i];
-        fprintf(stderr, "Freq: %2.1f ------------------------\n", waveletFreq); 
+        real waveletFreq = S.freq[i];
+				integer stacki   = S.stacki[i];
+				real dt          = S.dt[i];
+				integer forw_steps = S.forws[i];
+				integer back_steps = S.backs[i];
+        real dx = S.dx[i];
+        real dy = S.dy[i];
+        real dz = S.dz[i];
+				integer dimmz = S.dimmz[i];
+				integer dimmx = S.dimmx[i];
+				integer dimmy = S.dimmy[i];
+				integer ppd   = S.ppd[i];
 
-        /* Deltas of space, 16 grid point per Hz */
-        real dx = vmin / (16.0 * waveletFreq);
-        real dy = vmin / (16.0 * waveletFreq);
-        real dz = vmin / (16.0 * waveletFreq);
-
-        /* number of cells along axis, adding HALO planes */
-        integer dimmz = roundup(ceil( lenz / dz ) + 2*HALO, HALO);
-        integer dimmy = roundup(ceil( leny / dy ) + 2*HALO, HALO);
-        integer dimmx = roundup(ceil( lenx / dx ) + 2*HALO, HALO);
-
-        /* compute delta T */
-        real dt = 68e-6 * dx;
-
-        /* dynamic I/O */
-        integer stacki = floor( 0.25 / (2.5 * waveletFreq * dt) );
+        print_info("\n------ Computing %d-th frequency (%.2fHz).  -----\n", i, waveletFreq); 
 
         const integer numberOfCells = dimmz * dimmx * dimmx;
         const size_t VolumeMemory  = numberOfCells * sizeof(real) * 58;
@@ -233,19 +220,14 @@ int main(int argc, char* argv[])
         print_stats("Local domain size for freq %f [%d][%d][%d] is %lu bytes (%lf GB)", 
                     waveletFreq, dimmz, dimmx, dimmy, VolumeMemory, TOGB(VolumeMemory) );
 
-        /* compute time steps */
-        int forw_steps = max_int ( IT_FACTOR * (srclen/dt), 1);
-        int back_steps = max_int ( IT_FACTOR * (rcvlen/dt), 1);
-
-        for(int grad=0; grad<ngrads; grad++) /* iteracion de inversion */
+        for(int grad=0; grad<S.ngrads; grad++) /* iteracion de inversion */
         {
-            fprintf(stderr, "Processing %d-th gradient iteration.\n", grad);
             print_info("Processing %d-gradient iteration", grad);
 
-            for(int shot=0; shot<nshots; shot++)
+            for(int shot=0; shot<S.nshots; shot++)
             {
                 char shotfolder[200];
-                sprintf(shotfolder, "%s/shot.%2.1f.%05d", outputfolder, waveletFreq, shot);
+                sprintf(shotfolder, "%s/shot.%2.1f.%05d", S.outputfolder, waveletFreq, shot);
                 
                 if ( mpi_rank == 0 ) 
                 {
@@ -254,32 +236,30 @@ int main(int argc, char* argv[])
                     store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps,
                                            &dz, &dx, &dy, 
                                            &dimmz, &dimmx, &dimmy, 
-                                           outputfolder, waveletFreq );
+                                           S.outputfolder, waveletFreq );
                 }
 
                 MPI_Barrier( MPI_COMM_WORLD );
 
-                kernel( RTM_KERNEL, waveletFreq, shot, outputfolder, shotfolder);
+                kernel( RTM_KERNEL, waveletFreq, shot, S.outputfolder, shotfolder);
 
-                fprintf(stderr, "\tGradient loop processed for the %d-th shot\n", shot);
                 print_info("\tGradient loop processed for %d-th shot", shot);
-                
                 //update_shot()
             }
 
             MPI_Barrier( MPI_COMM_WORLD );
-            
-						
-						for(int test=0; test<ntest; test++)
+           
+						// gather_shots();
+
+						for(int test=0; test<S.ntests; test++)
             {
-                fprintf(stderr, "\tProcessing %d-th test iteration.\n", test);
                 print_info("\tProcessing %d-th test iteration", test);
                 
-                for(int shot=0; shot<nshots; shot++)
+                for(int shot=0; shot<S.nshots; shot++)
                 {
                     char shotfolder[200];
                     sprintf(shotfolder, "%s/test.%05d.shot.%2.1f.%05d", 
-                            outputfolder, test, waveletFreq, shot);
+                            S.outputfolder, test, waveletFreq, shot);
 
                     if ( mpi_rank == 0)
                     {
@@ -288,14 +268,13 @@ int main(int argc, char* argv[])
                         store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps, 
                                                &dz, &dx, &dy, 
                                                &dimmz, &dimmx, &dimmy, 
-                                               outputfolder, waveletFreq );
+                                               S.outputfolder, waveletFreq );
                     }
 
                     MPI_Barrier( MPI_COMM_WORLD );
 
-                    kernel( FM_KERNEL , waveletFreq, shot, outputfolder, shotfolder);
+                    kernel( FM_KERNEL , waveletFreq, shot, S.outputfolder, shotfolder);
                 
-                    fprintf(stderr, "\t\tTest loop processed for the %d-th shot\n", shot);
                     print_info("\t\tTest loop processed for the %d-th shot", shot);
                 }
             } /* end of test loop */

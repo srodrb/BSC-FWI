@@ -1,0 +1,21 @@
+#!/bin/bash
+#BSUB -W "0:15"
+#BSUB -J "test.intel64"
+#BSUB -o "job.out"
+#BSUB -e "job.err"
+#BUSB -x
+#BSUB -n "2"
+#BSUB -R "span[ptile=2]"
+#BSUB -q bsc_case
+
+source ../Scripts/impi_mn3.sh
+
+# Unset BOOTSTRAP=lsf. LSF does not support dynamic process execution completely.
+export I_MPI_DEBUG=0
+# export I_MPI_HYDRA_BOOTSTRAP=ssh
+# export I_MPI_HYDRA_IFACE="ib0"
+# export I_MPI_FABRICS="shm:dapl"
+# export I_MPI_DAPL_UD=enable
+# export I_MPI_DAPL_PROVIDER=ofa-v2-mlx4_0-1u
+
+mpirun -np 2 ./fwi.intel64 fwi_schedule.txt

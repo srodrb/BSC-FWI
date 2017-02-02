@@ -274,13 +274,39 @@ void free_memory_shot( coeff_t *c,
  * Loads initial values from coeffs, stress and velocity.
  */
 void load_initial_model ( const real    waveletFreq,
-                          const integer numberOfCells,
+													const integer dimmz,
+													const integer dimmx,
+													const integer dimmy,
                           coeff_t *c,
                           s_t     *s,
                           v_t     *v,
                           real    *rho)
 {
-    /* initialize stress */
+		/* These variables are used even when MPI is disabled */
+    int mpi_rank = 0, num_subdomains = 1;
+
+#if !defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
+    MPI_Comm_rank( MPI_COMM_WORLD, &mpi_rank );
+    MPI_Comm_size( MPI_COMM_WORLD, &num_subdomains );
+#endif
+
+	/* Local variables */
+	  double tstart_outer, tstart_inner;
+    double tend_outer, tend_inner;
+    double iospeed_inner, iospeed_outer;
+    char modelname[300];
+
+		const integer numberOfCells  = dimmz * dimmx * dimmy;
+    const integer cellsInVolume  = (dimmz) * (dimmx) * ( (dimmz-2*HALO)/num_subdomains );  
+    const integer bytesForVolume = cellsInVolume * sizeof(real);
+    
+		/*
+		 * Material, velocities and stresses are initizalized
+		 * accorting to the compilation flags, either randomly
+		 * or by reading an input velocity model.
+		 */
+
+		/* initialize stress arrays */
     set_array_to_constant( s->tl.zz, 0, numberOfCells);
     set_array_to_constant( s->tl.xz, 0, numberOfCells);
     set_array_to_constant( s->tl.yz, 0, numberOfCells);
@@ -308,7 +334,7 @@ void load_initial_model ( const real    waveletFreq,
 
 #ifdef DO_NOT_PERFORM_IO
 
-    /* initialize coefficients */
+    /* initialize material coefficients */
     set_array_to_random_real( c->c11, numberOfCells);
     set_array_to_random_real( c->c12, numberOfCells);
     set_array_to_random_real( c->c13, numberOfCells);
@@ -345,12 +371,12 @@ void load_initial_model ( const real    waveletFreq,
     set_array_to_random_real( v->br.v, numberOfCells );
     set_array_to_random_real( v->br.w, numberOfCells );
 
-    /* initialize rho */
+    /* initialize density (rho) */
     set_array_to_random_real( rho, numberOfCells );
 
 #else /* load velocity model from external file */
     
-    /* initialize coefficients */
+    /* initialize material coefficients */
     set_array_to_constant( c->c11, 1.0, numberOfCells);
     set_array_to_constant( c->c12, 1.0, numberOfCells);
     set_array_to_constant( c->c13, 1.0, numberOfCells);
@@ -373,51 +399,43 @@ void load_initial_model ( const real    waveletFreq,
     set_array_to_constant( c->c56, 1.0, numberOfCells);
     set_array_to_constant( c->c66, 1.0, numberOfCells);
 
-    /* initialize rho */
+    /* initialize density (rho) */
     set_array_to_constant( rho, 1.0, numberOfCells );
-
-    /* local variables */
-    double tstart_outer, tstart_inner;
-    double tend_outer, tend_inner;
-    double iospeed_inner, iospeed_outer;
-    char modelname[300];
 
      /* open initial model, binary file */
     sprintf( modelname, "../InputModels/velocitymodel_%.2f.bin", waveletFreq );
-
     print_info("Loading input model %s from disk (this could take a while)", modelname);
 
     /* start clock, take into account file opening */
     tstart_outer = dtime();
     FILE* model = safe_fopen( modelname, "rb", __FILE__, __LINE__ );
+
+    /* seek to the correct position corresponding to mpi_rank */
+    fseek ( model, bytesForVolume * mpi_rank + HALO, SEEK_SET);
     
     /* start clock, do not take into account file opening */
     tstart_inner = dtime();
 
     /* initalize velocity components */
-    safe_fread( v->tl.u, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->tl.v, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->tl.w, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->tr.u, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->tr.v, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->tr.w, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->bl.u, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->bl.v, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->bl.w, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->br.u, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->br.v, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
-    safe_fread( v->br.w, sizeof(real), numberOfCells, model, __FILE__, __LINE__ );
+    safe_fread( v->tl.u, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->tl.v, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->tl.w, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->tr.u, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->tr.v, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->tr.w, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->bl.u, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->bl.v, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->bl.w, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->br.u, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->br.v, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
+    safe_fread( v->br.w, sizeof(real), cellsInVolume, model, __FILE__, __LINE__ );
 
     /* stop inner timer */
     tend_inner = dtime() - tstart_inner;
 
     /* stop timer and compute statistics */
-    safe_fclose ( "velocitymodel.bin", model, __FILE__, __LINE__ );
+    safe_fclose ( modelname, model, __FILE__, __LINE__ );
     tend_outer = dtime() - tstart_outer;
-
-    //fprintf(stderr, "Number of cells %d\n", numberOfCells);
-    //fprintf(stderr, "sizeof real %lu\n", sizeof(real));
-    //fprintf(stderr, "bytes %lf\n", numberOfCells * sizeof(real) * 12.f);
 
     iospeed_inner = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
     iospeed_outer = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
@@ -426,82 +444,9 @@ void load_initial_model ( const real    waveletFreq,
     print_stats("\tInner time %lf seconds (%lf MiB/s)", tend_inner, iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MiB/s)", tend_outer, iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
+
 #endif /* end of DDO_NOT_PERFORM_IO clause */
 };
-
-
-#if !defined(SHARED_MEMORY_RUN)
-/*
- * This funtion is used to store both the local preconditioner and gradient
- * fields during the kernel execution.
- */
-void store_field (char *shotdir,
-                  const int shotid,
-									field_t type,
-                  v_t *v,
-                  const integer numberOfCells)
-{
-#ifdef DO_NOT_PERFOM_IO
-  fprintf(stderr, "Warning: We are not doing any IO here (%s)\n", __FUNCTION__);
-
-#else
-	/* create field name */
-	char fname[300];
-
-	switch ( type )
-	{
-		case ( GRADIENT ):
-		{
-			fprintf(stderr, "Storing local gradient field\n");
-			sprintf( fname, "%s/gradient_%05d.dat", shotdir, shotid );
-			break;
-		}
-		case ( PRECONDITIONER ):
-		{	
-			fprintf(stderr, "Storing local preconditioner field\n");
-			sprintf( fname, "%s/precond_%05d.dat" , shotdir, shotid );
-			break;
-		}
-		default:
-		{	
-			fprintf(stderr, "Invalid field type identificator\n");
-			abort();
-		}
-	}
-
-  FILE *ffile = safe_fopen(fname,"wb", __FILE__, __LINE__ );
-
-	double tstart=0.0, tend=0.0, iospeed=0.0;
-	tstart = dtime();
-	
-	safe_fwrite( v->tr.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->tr.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->tr.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	
-	safe_fwrite( v->tl.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->tl.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->tl.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-
-	safe_fwrite( v->br.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->br.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->br.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	
-	safe_fwrite( v->bl.u, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->bl.v, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-	safe_fwrite( v->bl.w, sizeof(real), numberOfCells, ffile, __FILE__, __LINE__ );
-
-	tend = dtime() - tstart;
-	iospeed = ((numberOfCells * sizeof(real) * 12.f) / (1024.f * 1024.f)) / tend;
-
-	fprintf(stderr, "Write field time: %lf seconds (%lf MiB/s)\n", tend, iospeed);
-  
-	if ( fclose(ffile)!=0)
-      fprintf(stderr,"Error closing file %s\n", fname);
-
-#endif
-};
-#endif
-
 
 /*
  * Saves the complete velocity field to disk.
@@ -511,7 +456,7 @@ void write_snapshot(char *folder,
                     v_t *v,
                     const integer numberOfCells)
 {
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
     print_info("We are not writing the snapshot here cause IO is not enabled!");
 #else
     /* local variables */
@@ -568,7 +513,7 @@ void read_snapshot(char *folder,
                    v_t *v,
                    const integer numberOfCells)
 {
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
     print_info("We are not reading the snapshot here cause IO is not enabled!");
 #else
     /* local variables */
@@ -645,7 +590,16 @@ void propagate_shot(time_d        direction,
     double tstress_start, tstress_total = 0.0;
     double tvel_start, tvel_total = 0.0;
     double megacells = 0.0;
+		const integer plane_size = dimmz * dimmx;
 
+		int rank = 1;  /* mpi local rank */
+		int nranks = 1; /* size of mpi rank */
+
+    /* Initialize local variables */
+#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)    
+		MPI_Comm_rank ( MPI_COMM_WORLD, &rank );
+    MPI_Comm_size ( MPI_COMM_WORLD, &nranks );
+#endif
 
     for(int t=0; t < timesteps; t++)
     {
@@ -662,27 +616,27 @@ void propagate_shot(time_d        direction,
         /* ------------------------------------------------------------------------------ */
       
         // /* Phase 1. Computation of the left-most planes of the domain */
-        // velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
-        //                     nz0 +   HALO,
-        //                     nzf -   HALO,
-        //                     nx0 +   HALO,
-        //                     nxf -   HALO,
-        //                     ny0 +   HALO,
-        //                     ny0 + 2*HALO,
-        //                     dimmz, dimmx);
+        velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
+                            nz0 +   HALO,
+                            nzf -   HALO,
+                            nx0 +   HALO,
+                            nxf -   HALO,
+                            ny0 +   HALO,
+                            ny0 + 2*HALO,
+                            dimmz, dimmx);
 
         // /* Phase 1. Computation of the right-most planes of the domain */
-        // velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
-        //                     nz0 +   HALO,
-        //                     nzf -   HALO,
-        //                     nx0 +   HALO,
-        //                     nxf -   HALO,
-        //                     nyf - 2*HALO,
-        //                     nyf -   HALO,
-        //                     dimmz, dimmx);
+        velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
+                            nz0 +   HALO,
+                            nzf -   HALO,
+                            nx0 +   HALO,
+                            nxf -   HALO,
+                            nyf - 2*HALO,
+                            nyf -   HALO,
+                            dimmz, dimmx);
     
         /* Boundary exchange for velocity values */
-        // exchange_velocity_boundaries( &v, plane_size, rank, numTasks, nyf, ny0);
+        exchange_velocity_boundaries( v, plane_size, rank, nranks, nyf, ny0);
 
         /* Phase 2. Computation of the central planes. */
         tvel_start = dtime();
@@ -703,27 +657,27 @@ void propagate_shot(time_d        direction,
         /* ------------------------------------------------------------------------------ */
 
         // /* Phase 1. Computation of the left-most planes of the domain */
-        // stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
-        //                   nz0 +   HALO,
-        //                   nzf -   HALO,
-        //                   nx0 +   HALO,
-        //                   nxf -   HALO,
-        //                   ny0 +   HALO,
-        //                   ny0 + 2*HALO,
-        //                   dimmz, dimmx);
+        stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
+                          nz0 +   HALO,
+                          nzf -   HALO,
+                          nx0 +   HALO,
+                          nxf -   HALO,
+                          ny0 +   HALO,
+                          ny0 + 2*HALO,
+                          dimmz, dimmx);
       
         // /* Phase 1. Computation of the right-most planes of the domain */
-        // stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
-        //                   nz0 +   HALO,
-        //                   nzf -   HALO,
-        //                   nx0 +   HALO,
-        //                   nxf -   HALO,
-        //                   nyf - 2*HALO,
-        //                   nyf -   HALO,
-        //                   dimmz, dimmx);
+        stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
+                          nz0 +   HALO,
+                          nzf -   HALO,
+                          nx0 +   HALO,
+                          nxf -   HALO,
+                          nyf - 2*HALO,
+                          nyf -   HALO,
+                          dimmz, dimmx);
 
         /* Boundary exchange for stress values */
-        // exchange_stress_boundaries( &s, plane_size, rank, numTasks, nyf, ny0);
+        exchange_stress_boundaries( s, plane_size, rank, nranks, nyf, ny0);
 
         /* Phase 2 computation. Central planes of the domain (maingrid) */
         tstress_start = dtime();

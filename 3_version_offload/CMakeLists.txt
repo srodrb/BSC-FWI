@@ -32,12 +32,24 @@ add_definitions ("-DDISTRIBUTED_MEMORY_RUN")
 option (perform-io "Perform local I/O" ON)
 
 if (perform-io)
-	add_definitions("-DLOG_IO_STATS")
-	message(STATUS "Real Input/Output is enabled. Statistics will be collected")
+	message(STATUS "Input/Output is enabled.")
 else()
-	add_definitions("-DDO_NOT_PERFORM_IO")
 	message(STATUS "Input/Output is disabled.")
+	add_definitions("-DDO_NOT_PERFORM_IO")
 endif()
+
+#--------------------------------------
+#       Configure statistics gathering
+#--------------------------------------
+option (collect-stats "Collect performance statistics" OFF)
+
+if (collect-stats AND perform-io)
+	message(STATUS "Kernel will collect performance statistics")
+	add_definitions("-DCOLLECT_STATS")
+elseif (collect-stats AND NOT perform-io)
+	message(WARNING "Kernel cant collect performance statistics, perform-io flag is disabled")
+endif()
+
 
 #--------------------------------------
 #        Use NMVe local storage
@@ -48,7 +60,7 @@ if (use-nmve)
 	add_definitions("-DUSE_NMVE")
 	message(STATUS "NMVe devices will be used for local I/O")
 else()
-	message(STATUS "Global file system will be used for local I/O")
+	message(STATUS "GPFS system will be used for local I/O")
 endif()
 
 
@@ -59,7 +71,7 @@ include_directories(
 	"../common/"
 	"./")
 
-add_executable(fwi.bin
+add_executable(fwi.intel64
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
 	"../common/fwi_kernel.c"
@@ -68,7 +80,7 @@ add_executable(fwi.bin
 	"./fwi_propagator.c"
  	"./fwi_main.c")
 
-install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
+install (TARGETS fwi.intel64 DESTINATION "${CMAKE_SOURCE_DIR}/")
 #--------------------------------------
 #    Create model generator utility
 #--------------------------------------

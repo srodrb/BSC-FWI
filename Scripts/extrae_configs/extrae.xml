@@ -1,10 +1,11 @@
 <?xml version='1.0'?>
 
 <trace enabled="yes"
- home="/apps/BSCTOOLS/extrae/3.4.1/impi+libgomp4.2"
+ home="/apps/BSCTOOLS/extrae/3.4.1/impi_mt+libgomp4.2"
  initial-mode="detail"
  type="paraver"
 >
+
   <mpi enabled="yes">
     <counters enabled="yes" />
   </mpi>
@@ -52,7 +53,7 @@
   </storage>
 
   <buffer enabled="yes">
-    <size enabled="yes">50000000</size>
+    <size enabled="yes">500000</size>
     <circular enabled="no" />
   </buffer>
 
@@ -85,7 +86,7 @@
 
   <input-output enabled="no" />
 
-  <merge enabled="no" 
+  <merge enabled="yes" 
     synchronization="default"
     tree-fan-out="16"
     max-memory="512"

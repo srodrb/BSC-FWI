@@ -79,11 +79,11 @@
   <sampling enabled="no" type="default" period="50m" variability="10m" />
 
   <dynamic-memory enabled="no">
-    <alloc enabled="yes" threshold="32768" />
+    <alloc enabled="yes" threshold="32768"/>
     <free  enabled="yes" />
   </dynamic-memory>
 
-  <input-output enabled="no" />
+  <input-output enabled="yes"/>
 
   <merge enabled="yes" 
     synchronization="default"

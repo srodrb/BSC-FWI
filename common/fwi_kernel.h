@@ -18,6 +18,7 @@
 #pragma once
 
 #include "fwi_propagator.h"
+#include "fwi_comms.h"
 
 /*
  * Ensures that the domain contains a minimum number of planes.
@@ -53,20 +54,22 @@ void check_memory_shot( const integer numberOfCells,
 
 /* --------------- I/O RELATED FUNCTIONS -------------------------------------- */
 
+/*
 void load_initial_model ( const real    waveletFreq,
                           const integer numberOfCells,
                           coeff_t *c,
                           s_t     *s,
                           v_t     *v,
                           real    *rho);
-
-#if !defined(SHARED_MEMORY_RUN)
-void store_field ( char *shotdir,
-                   const int shotid,
-									 field_t type,
-                   v_t *v,
-                   const integer numberOfCells);
-#endif
+*/
+void load_initial_model ( const real    waveletFreq,
+													const integer dimmz,
+													const integer dimmx,
+													const integer dimmy,
+                          coeff_t *c,
+                          s_t     *s,
+                          v_t     *v,
+                          real    *rho);
 
 void write_snapshot ( char          *folder,
                       const int     suffix,
@@ -77,22 +80,6 @@ void read_snapshot ( char          *folder,
                      const int     suffix,
                      v_t          *v,
                      const integer numberOfCells);
-
-/* --------------- BOUNDARY EXCHANGES ---------------------------------------- */
-
-void exchange_velocity_boundaries ( v_t *v,
-                                    int numElement,
-                                    int rank,
-                                    int numTasks,
-                                    int nyf,
-                                    int ny0);
-
-void exchange_stress_boundaries   ( s_t *s,
-                                    int numElement,
-                                    int rank,
-                                    int numTasks,
-                                    int nyf,
-                                    int ny0);
 
 
 
