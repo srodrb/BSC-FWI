@@ -40,7 +40,9 @@ void set_array_to_constant( real* restrict array, const real value, const intege
         array[i] = value;
 }
 
-void check_memory_shot( const integer numberOfCells,
+void check_memory_shot( const integer dimmz,
+												const integer dimmx,
+												const integer dimmy,
                         coeff_t *c,
                         s_t     *s,
                         v_t     *v,
@@ -50,7 +52,7 @@ void check_memory_shot( const integer numberOfCells,
     print_debug("Checking memory shot values");
 
     real UNUSED(value);
-    for( int i=0; i < numberOfCells; i++)
+    for( int i=0; i < (dimmz * dimmx * dimmy); i++)
     {
         value = c->c11[i];
         value = c->c12[i];
@@ -96,18 +98,21 @@ void check_memory_shot( const integer numberOfCells,
 
         value = rho[i];
     }
+		print_debug("Shot memory is well allocated");
 #endif
 };
 
-void alloc_memory_shot( const integer numberOfCells,
+void alloc_memory_shot( const integer dimmz,
+		const integer dimmx,
+		const integer dimmy,
                         coeff_t *c,
                         s_t     *s,
                         v_t     *v,
                         real    **rho)
 {
-    const integer size = numberOfCells * sizeof(real);
+    const integer size = dimmz * dimmx * dimmy * sizeof(real);
 
-    print_debug("ptr size = " I " bytes ("I" elements)", size, numberOfCells);
+    print_debug("ptr size = " I " bytes ("I" elements)", size, dimmz * dimmx * dimmy );
 
     /* allocate coefficients */
     c->c11 = (real*) __malloc( ALIGN_REAL, size);
@@ -273,7 +278,7 @@ void free_memory_shot( coeff_t *c,
 /*
  * Loads initial values from coeffs, stress and velocity.
  */
-void load_initial_model ( const real    waveletFreq,
+void load_local_velocity_model ( const real    waveletFreq,
 													const integer dimmz,
 													const integer dimmx,
 													const integer dimmy,
@@ -285,20 +290,18 @@ void load_initial_model ( const real    waveletFreq,
 		/* These variables are used even when MPI is disabled */
     int mpi_rank = 0, num_subdomains = 1;
 
-#if !defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
+#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
     MPI_Comm_rank( MPI_COMM_WORLD, &mpi_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &num_subdomains );
 #endif
 
 	/* Local variables */
-	  double tstart_outer, tstart_inner;
-    double tend_outer, tend_inner;
+	  double tstart_outer, tstart_inner, tend_outer, tend_inner;
     double iospeed_inner, iospeed_outer;
     char modelname[300];
 
-		const integer numberOfCells  = dimmz * dimmx * dimmy;
-    const integer cellsInVolume  = (dimmz) * (dimmx) * ( (dimmz-2*HALO)/num_subdomains );  
-    const integer bytesForVolume = cellsInVolume * sizeof(real);
+    const integer cellsInVolume  = (dimmz * dimmx * dimmy );  
+    const integer bytesForVolume = WRITTEN_FIELDS * cellsInVolume * sizeof(real);
     
 		/*
 		 * Material, velocities and stresses are initizalized
@@ -307,100 +310,100 @@ void load_initial_model ( const real    waveletFreq,
 		 */
 
 		/* initialize stress arrays */
-    set_array_to_constant( s->tl.zz, 0, numberOfCells);
-    set_array_to_constant( s->tl.xz, 0, numberOfCells);
-    set_array_to_constant( s->tl.yz, 0, numberOfCells);
-    set_array_to_constant( s->tl.xx, 0, numberOfCells);
-    set_array_to_constant( s->tl.xy, 0, numberOfCells);
-    set_array_to_constant( s->tl.yy, 0, numberOfCells);
-    set_array_to_constant( s->tr.zz, 0, numberOfCells);
-    set_array_to_constant( s->tr.xz, 0, numberOfCells);
-    set_array_to_constant( s->tr.yz, 0, numberOfCells);
-    set_array_to_constant( s->tr.xx, 0, numberOfCells);
-    set_array_to_constant( s->tr.xy, 0, numberOfCells);
-    set_array_to_constant( s->tr.yy, 0, numberOfCells);
-    set_array_to_constant( s->bl.zz, 0, numberOfCells);
-    set_array_to_constant( s->bl.xz, 0, numberOfCells);
-    set_array_to_constant( s->bl.yz, 0, numberOfCells);
-    set_array_to_constant( s->bl.xx, 0, numberOfCells);
-    set_array_to_constant( s->bl.xy, 0, numberOfCells);
-    set_array_to_constant( s->bl.yy, 0, numberOfCells);
-    set_array_to_constant( s->br.zz, 0, numberOfCells);
-    set_array_to_constant( s->br.xz, 0, numberOfCells);
-    set_array_to_constant( s->br.yz, 0, numberOfCells);
-    set_array_to_constant( s->br.xx, 0, numberOfCells);
-    set_array_to_constant( s->br.xy, 0, numberOfCells);
-    set_array_to_constant( s->br.yy, 0, numberOfCells);
+    set_array_to_constant( s->tl.zz, 0, cellsInVolume);
+    set_array_to_constant( s->tl.xz, 0, cellsInVolume);
+    set_array_to_constant( s->tl.yz, 0, cellsInVolume);
+    set_array_to_constant( s->tl.xx, 0, cellsInVolume);
+    set_array_to_constant( s->tl.xy, 0, cellsInVolume);
+    set_array_to_constant( s->tl.yy, 0, cellsInVolume);
+    set_array_to_constant( s->tr.zz, 0, cellsInVolume);
+    set_array_to_constant( s->tr.xz, 0, cellsInVolume);
+    set_array_to_constant( s->tr.yz, 0, cellsInVolume);
+    set_array_to_constant( s->tr.xx, 0, cellsInVolume);
+    set_array_to_constant( s->tr.xy, 0, cellsInVolume);
+    set_array_to_constant( s->tr.yy, 0, cellsInVolume);
+    set_array_to_constant( s->bl.zz, 0, cellsInVolume);
+    set_array_to_constant( s->bl.xz, 0, cellsInVolume);
+    set_array_to_constant( s->bl.yz, 0, cellsInVolume);
+    set_array_to_constant( s->bl.xx, 0, cellsInVolume);
+    set_array_to_constant( s->bl.xy, 0, cellsInVolume);
+    set_array_to_constant( s->bl.yy, 0, cellsInVolume);
+    set_array_to_constant( s->br.zz, 0, cellsInVolume);
+    set_array_to_constant( s->br.xz, 0, cellsInVolume);
+    set_array_to_constant( s->br.yz, 0, cellsInVolume);
+    set_array_to_constant( s->br.xx, 0, cellsInVolume);
+    set_array_to_constant( s->br.xy, 0, cellsInVolume);
+    set_array_to_constant( s->br.yy, 0, cellsInVolume);
 
 #ifdef DO_NOT_PERFORM_IO
 
     /* initialize material coefficients */
-    set_array_to_random_real( c->c11, numberOfCells);
-    set_array_to_random_real( c->c12, numberOfCells);
-    set_array_to_random_real( c->c13, numberOfCells);
-    set_array_to_random_real( c->c14, numberOfCells);
-    set_array_to_random_real( c->c15, numberOfCells);
-    set_array_to_random_real( c->c16, numberOfCells);
-    set_array_to_random_real( c->c22, numberOfCells);
-    set_array_to_random_real( c->c23, numberOfCells);
-    set_array_to_random_real( c->c24, numberOfCells);
-    set_array_to_random_real( c->c25, numberOfCells);
-    set_array_to_random_real( c->c26, numberOfCells);
-    set_array_to_random_real( c->c33, numberOfCells);
-    set_array_to_random_real( c->c34, numberOfCells);
-    set_array_to_random_real( c->c35, numberOfCells);
-    set_array_to_random_real( c->c36, numberOfCells);
-    set_array_to_random_real( c->c44, numberOfCells);
-    set_array_to_random_real( c->c45, numberOfCells);
-    set_array_to_random_real( c->c46, numberOfCells);
-    set_array_to_random_real( c->c55, numberOfCells);
-    set_array_to_random_real( c->c56, numberOfCells);
-    set_array_to_random_real( c->c66, numberOfCells);
+    set_array_to_random_real( c->c11, cellsInVolume);
+    set_array_to_random_real( c->c12, cellsInVolume);
+    set_array_to_random_real( c->c13, cellsInVolume);
+    set_array_to_random_real( c->c14, cellsInVolume);
+    set_array_to_random_real( c->c15, cellsInVolume);
+    set_array_to_random_real( c->c16, cellsInVolume);
+    set_array_to_random_real( c->c22, cellsInVolume);
+    set_array_to_random_real( c->c23, cellsInVolume);
+    set_array_to_random_real( c->c24, cellsInVolume);
+    set_array_to_random_real( c->c25, cellsInVolume);
+    set_array_to_random_real( c->c26, cellsInVolume);
+    set_array_to_random_real( c->c33, cellsInVolume);
+    set_array_to_random_real( c->c34, cellsInVolume);
+    set_array_to_random_real( c->c35, cellsInVolume);
+    set_array_to_random_real( c->c36, cellsInVolume);
+    set_array_to_random_real( c->c44, cellsInVolume);
+    set_array_to_random_real( c->c45, cellsInVolume);
+    set_array_to_random_real( c->c46, cellsInVolume);
+    set_array_to_random_real( c->c55, cellsInVolume);
+    set_array_to_random_real( c->c56, cellsInVolume);
+    set_array_to_random_real( c->c66, cellsInVolume);
     
     /* initalize velocity components */
-    set_array_to_random_real( v->tl.u, numberOfCells );
-    set_array_to_random_real( v->tl.v, numberOfCells );
-    set_array_to_random_real( v->tl.w, numberOfCells );
-    set_array_to_random_real( v->tr.u, numberOfCells );
-    set_array_to_random_real( v->tr.v, numberOfCells );
-    set_array_to_random_real( v->tr.w, numberOfCells );
-    set_array_to_random_real( v->bl.u, numberOfCells );
-    set_array_to_random_real( v->bl.v, numberOfCells );
-    set_array_to_random_real( v->bl.w, numberOfCells );
-    set_array_to_random_real( v->br.u, numberOfCells );
-    set_array_to_random_real( v->br.v, numberOfCells );
-    set_array_to_random_real( v->br.w, numberOfCells );
+    set_array_to_random_real( v->tl.u, cellsInVolume );
+    set_array_to_random_real( v->tl.v, cellsInVolume );
+    set_array_to_random_real( v->tl.w, cellsInVolume );
+    set_array_to_random_real( v->tr.u, cellsInVolume );
+    set_array_to_random_real( v->tr.v, cellsInVolume );
+    set_array_to_random_real( v->tr.w, cellsInVolume );
+    set_array_to_random_real( v->bl.u, cellsInVolume );
+    set_array_to_random_real( v->bl.v, cellsInVolume );
+    set_array_to_random_real( v->bl.w, cellsInVolume );
+    set_array_to_random_real( v->br.u, cellsInVolume );
+    set_array_to_random_real( v->br.v, cellsInVolume );
+    set_array_to_random_real( v->br.w, cellsInVolume );
 
     /* initialize density (rho) */
-    set_array_to_random_real( rho, numberOfCells );
+    set_array_to_random_real( rho, cellsInVolume );
 
 #else /* load velocity model from external file */
     
     /* initialize material coefficients */
-    set_array_to_constant( c->c11, 1.0, numberOfCells);
-    set_array_to_constant( c->c12, 1.0, numberOfCells);
-    set_array_to_constant( c->c13, 1.0, numberOfCells);
-    set_array_to_constant( c->c14, 1.0, numberOfCells);
-    set_array_to_constant( c->c15, 1.0, numberOfCells);
-    set_array_to_constant( c->c16, 1.0, numberOfCells);
-    set_array_to_constant( c->c22, 1.0, numberOfCells);
-    set_array_to_constant( c->c23, 1.0, numberOfCells);
-    set_array_to_constant( c->c24, 1.0, numberOfCells);
-    set_array_to_constant( c->c25, 1.0, numberOfCells);
-    set_array_to_constant( c->c26, 1.0, numberOfCells);
-    set_array_to_constant( c->c33, 1.0, numberOfCells);
-    set_array_to_constant( c->c34, 1.0, numberOfCells);
-    set_array_to_constant( c->c35, 1.0, numberOfCells);
-    set_array_to_constant( c->c36, 1.0, numberOfCells);
-    set_array_to_constant( c->c44, 1.0, numberOfCells);
-    set_array_to_constant( c->c45, 1.0, numberOfCells);
-    set_array_to_constant( c->c46, 1.0, numberOfCells);
-    set_array_to_constant( c->c55, 1.0, numberOfCells);
-    set_array_to_constant( c->c56, 1.0, numberOfCells);
-    set_array_to_constant( c->c66, 1.0, numberOfCells);
+    set_array_to_constant( c->c11, 1.0, cellsInVolume);
+    set_array_to_constant( c->c12, 1.0, cellsInVolume);
+    set_array_to_constant( c->c13, 1.0, cellsInVolume);
+    set_array_to_constant( c->c14, 1.0, cellsInVolume);
+    set_array_to_constant( c->c15, 1.0, cellsInVolume);
+    set_array_to_constant( c->c16, 1.0, cellsInVolume);
+    set_array_to_constant( c->c22, 1.0, cellsInVolume);
+    set_array_to_constant( c->c23, 1.0, cellsInVolume);
+    set_array_to_constant( c->c24, 1.0, cellsInVolume);
+    set_array_to_constant( c->c25, 1.0, cellsInVolume);
+    set_array_to_constant( c->c26, 1.0, cellsInVolume);
+    set_array_to_constant( c->c33, 1.0, cellsInVolume);
+    set_array_to_constant( c->c34, 1.0, cellsInVolume);
+    set_array_to_constant( c->c35, 1.0, cellsInVolume);
+    set_array_to_constant( c->c36, 1.0, cellsInVolume);
+    set_array_to_constant( c->c44, 1.0, cellsInVolume);
+    set_array_to_constant( c->c45, 1.0, cellsInVolume);
+    set_array_to_constant( c->c46, 1.0, cellsInVolume);
+    set_array_to_constant( c->c55, 1.0, cellsInVolume);
+    set_array_to_constant( c->c56, 1.0, cellsInVolume);
+    set_array_to_constant( c->c66, 1.0, cellsInVolume);
 
     /* initialize density (rho) */
-    set_array_to_constant( rho, 1.0, numberOfCells );
+    set_array_to_constant( rho, 1.0, cellsInVolume );
 
      /* open initial model, binary file */
     sprintf( modelname, "../InputModels/velocitymodel_%.2f.bin", waveletFreq );
@@ -411,7 +414,7 @@ void load_initial_model ( const real    waveletFreq,
     FILE* model = safe_fopen( modelname, "rb", __FILE__, __LINE__ );
 
     /* seek to the correct position corresponding to mpi_rank */
-    fseek ( model, bytesForVolume * mpi_rank + HALO, SEEK_SET);
+    fseek ( model, bytesForVolume	* mpi_rank, SEEK_SET);
     
     /* start clock, do not take into account file opening */
     tstart_inner = dtime();
@@ -437,10 +440,10 @@ void load_initial_model ( const real    waveletFreq,
     safe_fclose ( modelname, model, __FILE__, __LINE__ );
     tend_outer = dtime() - tstart_outer;
 
-    iospeed_inner = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
-    iospeed_outer = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
+    iospeed_inner = ((cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
+    iospeed_outer = ((cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
 
-    print_stats("Initial velocity model loaded (%lf GB)", TOGB(numberOfCells * sizeof(real) * 12));
+    print_stats("Initial velocity model loaded (%lf GB)", TOGB(cellsInVolume * sizeof(real) * 12.f));
     print_stats("\tInner time %lf seconds (%lf MiB/s)", tend_inner, iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MiB/s)", tend_outer, iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
@@ -454,15 +457,18 @@ void load_initial_model ( const real    waveletFreq,
 void write_snapshot(char *folder,
                     int suffix,
                     v_t *v,
-                    const integer numberOfCells)
+                    const integer dimmz,
+										const integer dimmx,
+										const integer dimmy)
 {
 #if defined(DO_NOT_PERFORM_IO)
-    print_info("We are not writing the snapshot here cause IO is not enabled!");
+    print_debug("We are not writing the snapshot here cause IO is not enabled!");
 #else
     /* local variables */
     double tstart_outer, tstart_inner;
     double iospeed_outer, iospeed_inner;
     double tend_outer, tend_inner;
+		const  integer cellsInVolume = dimmz * dimmx * dimmy;
     char fname[300];
     
     /* open snapshot file and write results */
@@ -472,21 +478,21 @@ void write_snapshot(char *folder,
     FILE *snapshot = safe_fopen(fname,"wb", __FILE__, __LINE__ );
 
     tstart_inner = dtime();
-    safe_fwrite( v->tr.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->tr.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->tr.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tr.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tr.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tr.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
-    safe_fwrite( v->tl.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->tl.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->tl.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tl.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tl.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->tl.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
     
-    safe_fwrite( v->br.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->br.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->br.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->br.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->br.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->br.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
     
-    safe_fwrite( v->bl.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->bl.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fwrite( v->bl.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->bl.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->bl.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fwrite( v->bl.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
     /* stop inner timer */
     tend_inner = dtime();
@@ -495,10 +501,10 @@ void write_snapshot(char *folder,
     safe_fclose(fname, snapshot, __FILE__, __LINE__ );
     tend_outer = dtime();
 
-    iospeed_inner = (( (double) numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_inner - tstart_inner);
-    iospeed_outer = (( (double) numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_outer - tstart_outer);
+    iospeed_inner = (( cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_inner - tstart_inner);
+    iospeed_outer = (( cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / (tend_outer - tstart_outer);
 
-    print_stats("Write snapshot (%lf GB)", TOGB(numberOfCells * sizeof(real) * 12));
+    print_stats("Write snapshot (%lf GB)", TOGB(cellsInVolume * sizeof(real) * 12));
     print_stats("\tInner time %lf seconds (%lf MB/s)", (tend_inner - tstart_inner), iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MB/s)", (tend_outer - tstart_outer), iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
@@ -511,10 +517,12 @@ void write_snapshot(char *folder,
 void read_snapshot(char *folder,
                    int suffix,
                    v_t *v,
-                   const integer numberOfCells)
+                   const integer dimmz,
+									 const integer dimmx,
+									 const integer dimmy)
 {
 #if defined(DO_NOT_PERFORM_IO)
-    print_info("We are not reading the snapshot here cause IO is not enabled!");
+    print_debug("We are not reading the snapshot here cause IO is not enabled!");
 #else
     /* local variables */
     double tstart_outer, tstart_inner;
@@ -525,25 +533,30 @@ void read_snapshot(char *folder,
     /* open file and read snapshot */
     sprintf(fname,"%s/snapshot.%05d.bin", folder, suffix);
 
+		/* Compute number of cells in planes and volumes */
+		const integer cellsInVolume = dimmz * dimmx * dimmy;
+
+
+
     tstart_outer = dtime();
     FILE *snapshot = safe_fopen(fname,"rb", __FILE__, __LINE__ );
 
     tstart_inner = dtime();
-    safe_fread( v->tr.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->tr.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->tr.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tr.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tr.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tr.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
-    safe_fread( v->tl.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->tl.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->tl.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tl.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tl.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->tl.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
-    safe_fread( v->br.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->br.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->br.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->br.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->br.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->br.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
-    safe_fread( v->bl.u, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->bl.v, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
-    safe_fread( v->bl.w, sizeof(real), numberOfCells, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->bl.u, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->bl.v, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
+    safe_fread( v->bl.w, sizeof(real), cellsInVolume, snapshot, __FILE__, __LINE__ );
 
     /* stop inner timer */
     tend_inner = dtime() - tstart_inner;
@@ -552,10 +565,10 @@ void read_snapshot(char *folder,
     safe_fclose(fname, snapshot, __FILE__, __LINE__ );
     tend_outer = dtime() - tstart_outer;
 
-    iospeed_inner = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
-    iospeed_outer = ((numberOfCells * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
+    iospeed_inner = ((cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_inner;
+    iospeed_outer = ((cellsInVolume * sizeof(real) * 12.f) / (1000.f * 1000.f)) / tend_outer;
 
-    print_stats("Read snapshot (%lf GB)", TOGB(numberOfCells * sizeof(real) * 12));
+    print_stats("Read snapshot (%lf GB)", TOGB(cellsInVolume * sizeof(real) * 12));
     print_stats("\tInner time %lf seconds (%lf MiB/s)", tend_inner, iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MiB/s)", tend_outer, iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
@@ -581,41 +594,42 @@ void propagate_shot(time_d        direction,
                     integer       nyf,
                     integer       stacki,
                     char          *folder,
-                    real          *dataflush,
-                    integer       datalen,
+                    real          *UNUSED(dataflush),
                     integer       dimmz,
-                    integer       dimmx)
+                    integer       dimmx,
+                    integer       dimmy)
 {
     double tglobal_start, tglobal_total = 0.0;
     double tstress_start, tstress_total = 0.0;
     double tvel_start, tvel_total = 0.0;
     double megacells = 0.0;
-		const integer plane_size = dimmz * dimmx;
 
-		int rank = 1;  /* mpi local rank */
-		int nranks = 1; /* size of mpi rank */
+		int rank=0, ranksize=1;
 
-    /* Initialize local variables */
-#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)    
-		MPI_Comm_rank ( MPI_COMM_WORLD, &rank );
-    MPI_Comm_size ( MPI_COMM_WORLD, &nranks );
-#endif
+		#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
+    	MPI_Comm_rank( MPI_COMM_WORLD, &rank);
+    	MPI_Comm_size( MPI_COMM_WORLD, &ranksize);
+		#endif
 
-    for(int t=0; t < timesteps; t++)
+
+		for(int t=0; t < timesteps; t++)
     {
 				/* print out some information */
-        if( t&stacki == 0 ) print_debug("Computing %d-th timestep", t);
+        // if( t&stacki == 0 ) print_debug("Computing %d-th timestep", t);
+        print_info("Computing %d-th timestep", t);
 
         /* perform IO */
-        if ( t%stacki == 0 && direction == BACKWARD) read_snapshot(folder, ntbwd-t, &v, datalen);
+        if ( t%stacki == 0 && direction == BACKWARD) read_snapshot(folder, ntbwd-t, &v, dimmz, dimmx, dimmy);
 
         tglobal_start = dtime();
 
         /* ------------------------------------------------------------------------------ */
         /*                      VELOCITY COMPUTATION                                      */
         /* ------------------------------------------------------------------------------ */
-      
-        // /* Phase 1. Computation of the left-most planes of the domain */
+     
+				print_info("OK");
+
+        /* Phase 1. Computation of the left-most planes of the domain */
         velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
                             nz0 +   HALO,
                             nzf -   HALO,
@@ -623,9 +637,10 @@ void propagate_shot(time_d        direction,
                             nxf -   HALO,
                             ny0 +   HALO,
                             ny0 + 2*HALO,
-                            dimmz, dimmx);
+                            dimmz, dimmx );
 
-        // /* Phase 1. Computation of the right-most planes of the domain */
+				print_info("OK");
+        /* Phase 1. Computation of the right-most planes of the domain */
         velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
                             nz0 +   HALO,
                             nzf -   HALO,
@@ -633,11 +648,11 @@ void propagate_shot(time_d        direction,
                             nxf -   HALO,
                             nyf - 2*HALO,
                             nyf -   HALO,
-                            dimmz, dimmx);
+                            dimmz, dimmx );
     
-        /* Boundary exchange for velocity values */
-        exchange_velocity_boundaries( v, plane_size, rank, nranks, nyf, ny0);
 
+
+				print_info("OK");
         /* Phase 2. Computation of the central planes. */
         tvel_start = dtime();
 
@@ -648,15 +663,21 @@ void propagate_shot(time_d        direction,
                             nxf -   HALO,
                             ny0 +   HALO,
                             nyf -   HALO,
-                            dimmz, dimmx);
+                            dimmz, dimmx );
 
-        tvel_total += (dtime() - tvel_start);
+				print_info("OK");
+
+        /* Boundary exchange for velocity values */
+        exchange_velocity_boundaries( v, dimmz * dimmx, rank, ranksize, nyf, ny0);
+        
+				tvel_total += (dtime() - tvel_start);
+				print_info("OK");
 
         /* ------------------------------------------------------------------------------ */
         /*                        STRESS COMPUTATION                                      */
         /* ------------------------------------------------------------------------------ */
 
-        // /* Phase 1. Computation of the left-most planes of the domain */
+        /* Phase 1. Computation of the left-most planes of the domain */
         stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
                           nz0 +   HALO,
                           nzf -   HALO,
@@ -664,9 +685,10 @@ void propagate_shot(time_d        direction,
                           nxf -   HALO,
                           ny0 +   HALO,
                           ny0 + 2*HALO,
-                          dimmz, dimmx);
+                          dimmz, dimmx );
       
-        // /* Phase 1. Computation of the right-most planes of the domain */
+				print_info("OK");
+        /* Phase 1. Computation of the right-most planes of the domain */
         stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
                           nz0 +   HALO,
                           nzf -   HALO,
@@ -674,11 +696,13 @@ void propagate_shot(time_d        direction,
                           nxf -   HALO,
                           nyf - 2*HALO,
                           nyf -   HALO,
-                          dimmz, dimmx);
+                          dimmz, dimmx );
 
+				print_info("OK");
         /* Boundary exchange for stress values */
-        exchange_stress_boundaries( s, plane_size, rank, nranks, nyf, ny0);
+        exchange_stress_boundaries( s, dimmz * dimmx, rank, ranksize, nyf, ny0);
 
+				print_info("OK");
         /* Phase 2 computation. Central planes of the domain (maingrid) */
         tstress_start = dtime();
 
@@ -689,13 +713,15 @@ void propagate_shot(time_d        direction,
                           nxf -   HALO,
                           ny0 +   HALO,
                           nyf -   HALO,
-                          dimmz, dimmx);
+                          dimmz, dimmx );
 
+				print_info("OK");
         tstress_total += (dtime() - tstress_start);
         tglobal_total += (dtime() - tglobal_start);
 
         /* perform IO */
-        if ( t%stacki == 0 && direction == FORWARD) write_snapshot(folder, ntbwd-t, &v, datalen);
+        if ( t%stacki == 0 && direction == FORWARD) write_snapshot(folder, ntbwd-t, &v, dimmz, dimmx, dimmy);
+				print_info("OK");
     }
     
     /* compute some statistics */

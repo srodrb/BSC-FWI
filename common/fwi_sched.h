@@ -29,19 +29,19 @@ typedef struct{
 	integer ntests;
 	char    outputfolder[200];
 
-	real    *freq;
-	integer *forws;
-	integer *backs;
-	integer *stacki;
-	real    *dt;
-	real    *dz;
-	real    *dx;
-	real    *dy;	
+	real       *freq;
+	integer    *forws;
+	integer    *backs;
+	integer    *stacki;
+	real       *dt;
+	real       *dz;
+	real       *dx;
+	real       *dy;	
 	integer    *dimmz;
 	integer    *dimmx;
 	integer    *dimmy;
-	integer *ppd;
-	integer *nworkers;
+	integer    *ppd;
+	integer    *nworkers;
 } schedule_t;
 
 void schedule_free( schedule_t S );

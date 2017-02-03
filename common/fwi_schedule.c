@@ -19,6 +19,12 @@
  * =====================================================================================
  */
 
+/*
+ * Computes the number of planes and resources required.
+ */
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,8 +50,6 @@ int main(int argc, char *argv[])
 		abort();
 	}
 
-	print_debug("Input arguments: %s %s", arvg[1], argv[2]);
-
 	/* 
 	 * Local parameters that define the simulation
 	 */
@@ -53,8 +57,8 @@ int main(int argc, char *argv[])
 	int ngrads;
 	int ntests;
 	int nfreqs;
-	int slavemem;
-	int workermem;
+	real slavemem;
+	real workermem;
 	int nworkers;
   real lenz;
 	real lenx;
@@ -141,7 +145,7 @@ int main(int argc, char *argv[])
 				stacki, forw_steps, back_steps, dt );
 		print_info("Value of dz = %f dx = %f dy = %f", dz, dx, dy);
 
-		integer yplane_mem = dimmx * dimmz * 58 * sizeof(float); 
+		integer yplane_mem = dimmx * dimmz * 58 * sizeof(real); 
 
 
 		/* if the accelerator memory is 0 means that it wont be used */

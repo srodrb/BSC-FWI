@@ -1,14 +1,16 @@
 #!/bin/bash
-#BSUB -W "0:15"
+#BSUB -n "2"
+#BSUB -W "0:05"
 #BSUB -J "test.intel64"
 #BSUB -o "job.out"
 #BSUB -e "job.err"
 #BUSB -x
-#BSUB -n "2"
-#BSUB -R "span[ptile=2]"
-#BSUB -q bsc_case
+#BSUB -R "span[ptile=1]"
+#BSUB -q bsc_debug
 
 source ../Scripts/impi_mn3.sh
+
+export OMP_NUM_THREADS=16
 
 # Unset BOOTSTRAP=lsf. LSF does not support dynamic process execution completely.
 export I_MPI_DEBUG=0

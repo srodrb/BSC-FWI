@@ -1,8 +1,12 @@
 *.pcf
-*.pvr
+*.prv
 *.row
 *.bin
 *.log
+*.vim
+*.out
+*.err
+run*
 cscope.*
 Results/*
 build/*

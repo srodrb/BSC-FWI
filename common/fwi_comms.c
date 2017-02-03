@@ -1,31 +1,5 @@
 #include "fwi_comms.h"
 
-	integer exchange_buffer (const real*   sendbuf, 
-	                               real*   recvbuf, 
-	                         const integer dst, 
-	                         const integer src, 
-	                         const integer message_size,
-	                         const char*   file,
-	                         const integer line)
-	{
-	    int err;
-	    int tag = 100;
-	    
-	    print_debug( "         [BEFORE]MPI sendrecv [count:%d][dst:%d][src:%d] %s : %d", 
-					message_size,  dst, src, file, line);
-	
-	    MPI_Status  statuses[2];
-	    MPI_Request requests[2];
-	    
-	    MPI_Irecv( recvbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[0] );
-	    MPI_Isend( sendbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[1] );
-	    err = MPI_Waitall(2, requests, statuses);
-	
-	    print_debug( "         [AFTER ]MPI sendrecv                          %s : %d", 
-					file, line);    
-	
-	    return err;
-	};
 
 void exchange_velocity_boundaries ( v_t v, 
                                     const integer plane_size, 
@@ -82,6 +56,8 @@ void exchange_velocity_boundaries ( v_t v,
         EXCHANGE( &v.br.v[right_send], &v.br.v[right_recv], rank+1, rank, nelems );
         EXCHANGE( &v.br.w[right_send], &v.br.w[right_recv], rank+1, rank, nelems );
     }
+
+		print_debug("Velocity boundaries exchanged correctly");
 };
 
 void exchange_stress_boundaries ( s_t s, 
@@ -163,4 +139,6 @@ void exchange_stress_boundaries ( s_t s,
         EXCHANGE( &s.br.xy[right_send], &s.br.xy[right_recv], rank+1, rank, nelems );
         EXCHANGE( &s.br.yy[right_send], &s.br.yy[right_recv], rank+1, rank, nelems );
     }
+
+		print_debug("Stress boundaries exchanged correctly");
 };

@@ -214,7 +214,7 @@ void velocity_propagator(v_t       v,
                          const integer   ny0,
                          const integer   nyf,
                          const integer   dimmz,
-                         const integer   dimmx);
+                         const integer   dimmx );
 
 
 

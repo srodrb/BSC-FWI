@@ -29,8 +29,8 @@ void read_fwi_parameters (const char *fname,
 													int  *nshots,
 													int  *ngrads,
 													int  *ntests,
-													int  *workmem,
-													int  *slavemem,
+													real  *workmem,
+													real  *slavemem,
                           char *outputfolder)
 {
     FILE *fp = safe_fopen(fname, "r", __FILE__, __LINE__ );
@@ -44,12 +44,16 @@ void read_fwi_parameters (const char *fname,
     CHECK( fscanf( fp, "%d\n", (int*)  nshots  ) );
     CHECK( fscanf( fp, "%d\n", (int*)  ngrads  ) );
     CHECK( fscanf( fp, "%d\n", (int*)  ntests  ) );
-    CHECK( fscanf( fp, "%d\n", (int*)  workmem ) );
-    CHECK( fscanf( fp, "%d\n", (int*)  slavemem) );
+    CHECK( fscanf( fp, "%f\n", (real*)  workmem ) );
+    CHECK( fscanf( fp, "%f\n", (real*)  slavemem) );
     CHECK( fscanf( fp, "%s\n",  outputfolder  ) );
 
-    print_debug("Len (z,x,y) (%f,%f,%f) vmin %f scrlen %f rcvlen %f outputfolder '%s'",
-      *lenz, *lenx, *leny, *vmin, *srclen, *rcvlen, outputfolder );
+		print_debug("Worker memory %f slave memory %f", *workmem, *slavemem);
+
+    print_debug("Len (z,x,y) (%.2f,%.2f,%.2f)\n \
+				vmin %.2f scrlen %.2f rcvlen %.2f outputfolder '%s'\n \
+				worker memory %.5f GB slave memory %.5fGB",
+      *lenz, *lenx, *leny, *vmin, *srclen, *rcvlen, outputfolder, *workmem, *slavemem );
 
     fclose(fp);
 };
@@ -192,7 +196,7 @@ void store_shot_parameters(int     shotid,
     sprintf(name, "%s/shotparams_%2.1f.%05d.dat", 
             outputfolder, waveletFreq, shotid);
 
-    print_debug("Storing parameters for shot %d into %s", shotid, name);
+    print_debug("Storing parameters for freq %.3fHz, shot %d into %s", waveletFreq, shotid, name);
 
     FILE *fp = safe_fopen(name, "w", __FILE__, __LINE__);
 
@@ -227,7 +231,7 @@ void load_shot_parameters(int     shotid,
     char name[200];
 
     sprintf(name, "%s/shotparams_%2.1f.%05d.dat", outputfolder, waveletFreq, shotid);
-    print_debug("Storing parameters for freq %d shot %d into %s", waveletFreq, shotid, name);
+    print_debug("Loading parameters for freq %.3fHz, shot %d into %s", waveletFreq, shotid, name);
 
     FILE *fp = safe_fopen(name, "r", __FILE__, __LINE__);
 

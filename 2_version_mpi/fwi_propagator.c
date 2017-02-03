@@ -326,9 +326,7 @@ void velocity_propagator(v_t           v,
                          const integer dimmz,
                          const integer dimmx)
 {
-#ifdef DEBUG
-    fprintf(stderr, "Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")\n", __FUNCTION__, nz0,nzf,nx0,nxf,ny0,nyf);
-#endif
+    print_debug("Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")", nz0,nzf,nx0,nxf,ny0,nyf);
 
 #ifdef __INTEL_COMPILER
     #pragma forceinline recursive
@@ -407,9 +405,8 @@ void stress_propagator(s_t           s,
                        const integer dimmz,
                        const integer dimmx )
 {
-#ifdef DEBUG
-    fprintf(stderr, "Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")\n", __FUNCTION__, nz0,nzf,nx0,nxf,ny0,nyf);
-#endif
+    print_debug("Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")", nz0,nzf,nx0,nxf,ny0,nyf);
+
 #ifdef __INTEL_COMPILER
     #pragma forceinline recursive
 #endif

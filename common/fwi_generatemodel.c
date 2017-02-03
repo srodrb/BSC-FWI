@@ -51,9 +51,6 @@ int main(int argc, const char *argv[])
 
         print_info("Creating synthetic velocity input model for %f Hz freq", waveletFreq );
 
-				/* Compute number of cells per array */
-				const integer numberOfCells = dimmz * dimmy * dimmx;
-        print_info("Elements/array = "I"\n", numberOfCells);
 
 				/* generate complete path for output model */
         char modelname[500];
@@ -61,13 +58,16 @@ int main(int argc, const char *argv[])
 
         FILE* model = safe_fopen( modelname, "wb", __FILE__, __LINE__);
 
-        real *buffer = __malloc( ALIGN_REAL, sizeof(real) * numberOfCells);
+				/* Compute number of cells per array */
+				const integer cellsInVolume = dimmz * dimmy * dimmx;
+        print_info("Number of cells in volume:"I"\n", cellsInVolume );
+        real *buffer = __malloc( ALIGN_REAL, sizeof(real) * cellsInVolume);
 
         /* safe dummy buffer */
         for(int i = 0; i < WRITTEN_FIELDS; i++)
         {
-            set_array_to_random_real( buffer, numberOfCells );
-            safe_fwrite( buffer, sizeof(real), numberOfCells, model, __FILE__, __LINE__);
+            set_array_to_random_real( buffer, cellsInVolume );
+            safe_fwrite( buffer, sizeof(real), cellsInVolume, model, __FILE__, __LINE__);
         }
 
         /* free buffer */

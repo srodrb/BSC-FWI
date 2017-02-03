@@ -24,7 +24,18 @@ endif()
 #--------------------------------------
 # set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
 set (CMAKE_C_FLAGS "-g -std=c99 -fopenmp")
-add_definitions ("-DSHARED_MEMORY_RUN")
+add_definitions ("-DSHARED_MEMORY_IMPLEMENTATION")
+
+#--------------------------------------
+#   Configure release
+#--------------------------------------
+set (debug "Debug mode enabled" OFF)
+
+if (debug)
+	message(STATUS "Debug mode enabled")
+	add_definitions ("-DDEBUG")
+endif()
+
 
 
 #--------------------------------------
@@ -67,21 +78,22 @@ endif()
 #--------------------------------------
 #          Create fwi binary
 #--------------------------------------
-include_directories(
-	"../common/"
-	"./")
-
-add_executable(fwi.bin
- 	"./fwi_main.c"	
-	"../common/fwi_constants.c"
-	"../common/fwi_common.c"
-	"../common/fwi_kernel.c"
-	"../common/fwi_sched.c"
-	"./fwi_propagator.c")
-
-target_link_libraries(fwi.bin "-lm")
-
-install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
+# include_directories(
+# 	"../common/"
+# 	"./")
+# 
+# add_executable(fwi.bin
+#  	"./fwi_main.c"	
+# 	"../common/fwi_constants.c"
+# 	"../common/fwi_common.c"
+# 	"../common/fwi_comms.c"
+# 	"../common/fwi_kernel.c"
+# 	"../common/fwi_sched.c"
+# 	"./fwi_propagator.c")
+# 
+# target_link_libraries(fwi.bin "-lm")
+# 
+# install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 #--------------------------------------
 #    Create model generator utility
 #--------------------------------------
@@ -92,9 +104,10 @@ include_directories(
 add_executable(generateModel.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
+ 	"../common/fwi_comms.c"
+	"./fwi_propagator.c"
 	"../common/fwi_kernel.c"
 	"../common/fwi_sched.c"
-	"./fwi_propagator.c"
 	"../common/fwi_generatemodel.c")
 
 target_link_libraries(generateModel.bin "-lm")
@@ -110,9 +123,10 @@ include_directories(
 add_executable(generateSchedule.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
+ 	"../common/fwi_comms.c"
+	"./fwi_propagator.c"
 	"../common/fwi_kernel.c"
 	"../common/fwi_sched.c"
-	"./fwi_propagator.c"
 	"../common/fwi_schedule.c")
 
 target_link_libraries(generateSchedule.bin "-lm")

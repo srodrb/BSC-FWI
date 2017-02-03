@@ -84,8 +84,8 @@ void read_fwi_parameters (const char *fname,
 													int  *nshots,
 													int  *ngrads,
 													int  *ntests,
-													int  *workmem,
-													int  *slavemem,
+													real  *workmem,
+													real  *slavemem,
                           char *outputfolder);
 
 void store_shot_parameters(int     shotid,

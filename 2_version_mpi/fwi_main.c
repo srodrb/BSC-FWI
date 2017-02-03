@@ -37,22 +37,15 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     real dt,dz,dx,dy;
     integer dimmz, dimmx, dimmy, forw_steps, back_steps;
 
+		/* load shot parameters */
     load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, &dz, &dx, &dy, &dimmz, &dimmx, &dimmy, outputfolder, waveletFreq );
 
-    /* number of cell for each MPI rank */
+    /* Compute number of cell for each MPI rank and local integration limits */
     const integer planesPerSubdomain = ((dimmy-2*HALO)/Subdomains);
-
-    /* Compute local computing limits */
     const integer y0 = planesPerSubdomain * mpi_rank; 
-  //const integer y0 = (dimmz) * (dimmx) * (planesPerSubdomain * localRank    );
     const integer yF = y0 + planesPerSubdomain + 2*HALO; 
-  //const integer yF = (dimmz) * (dimmx) * (planesPerSubdomain * (localRank+1));
-
     const integer edimmy = (yF - y0);
     const integer numberOfCells = dimmz * dimmx * edimmy;
-
-
-		fprintf(stderr, "number of cells in kernel() %d\n", numberOfCells);
 
     /* set GLOBAL integration limits */
     const integer nz0 = 0;
@@ -67,19 +60,20 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     s_t     s;
     coeff_t coeffs;
 
+		print_debug("number of cells in kernel() %d\n", numberOfCells);
     print_debug("The length of local arrays is " I " cells", numberOfCells);
 
     /* allocate shot memory */
-    alloc_memory_shot  ( numberOfCells, &coeffs, &s, &v, &rho);
+    alloc_memory_shot  ( dimmz, dimmx, edimmy, &coeffs, &s, &v, &rho);
 
     /* load initial model from a binary file */
-    load_initial_model ( waveletFreq, dimmz, dimmx, edimmy, &coeffs, &s, &v, rho);
+    load_local_velocity_model ( waveletFreq, dimmz, dimmx, edimmy, &coeffs, &s, &v, rho);
 
     /* Allocate memory for IO buffer */
     real* io_buffer = (real*) __malloc( ALIGN_REAL, numberOfCells * sizeof(real) * WRITTEN_FIELDS );
 
     /* inspects every array positions for leaks. Enabled when DEBUG flag is defined */
-    check_memory_shot  ( numberOfCells, &coeffs, &s, &v, rho);
+    check_memory_shot  ( dimmz, dimmx, edimmy, &coeffs, &s, &v, rho);
 
     print_debug( "MPI rank " I " compute from y=" I " to=" I ". #planes per subdomain " I " ", 
             mpi_rank, y0, yF, planesPerSubdomain);
@@ -122,7 +116,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
 
         print_stats("Backward propagation finished in %lf seconds", end_t - start_t );
 
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
         print_info("Warning: we are not creating gradient nor preconditioner "
                    "fields, because IO is not enabled for this execution" );
 #else

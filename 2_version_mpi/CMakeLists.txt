@@ -27,7 +27,7 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-O2")
+	set (CMAKE_C_FLAGS "-xHost")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	set (CMAKE_C_FLAGS "-xMIC-AVX512")
@@ -35,11 +35,23 @@ else()
 	message (FATAL_ERROR "Invalid architecture descriptor!")
 endif()
 
+
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-# set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
-set (CMAKE_C_FLAGS "-g -std=c99 -qopenmp")
+set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
+# set (CMAKE_C_FLAGS "-g -std=c99 -qopenmp")
+
+
+#--------------------------------------
+#   Configure release
+#--------------------------------------
+set (debug "Debug mode enabled" OFF)
+
+if (debug)
+	message(STATUS "Debug mode enabled")
+	add_definitions ("-DDEBUG")
+endif()
 
 
 #--------------------------------------

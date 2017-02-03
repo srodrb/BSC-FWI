@@ -35,7 +35,9 @@ void set_array_to_constant(real* restrict array,
                            const real value,
                            const integer length);
 
-void alloc_memory_shot( const integer numberOfCells,
+void alloc_memory_shot( const integer dimmz,
+		const integer dimmx,
+		const integer dimmy,
                         coeff_t *c,
                         s_t     *s,
                         v_t     *v,
@@ -46,23 +48,16 @@ void free_memory_shot( coeff_t *c,
                        v_t     *v,
                        real    **rho);
 
-void check_memory_shot( const integer numberOfCells,
+void check_memory_shot( const integer dimmz,
+		const integer dimmx,
+		const integer dimmy,
                         coeff_t *c,
                         s_t     *s,
                         v_t     *v,
                         real    *rho);
 
 /* --------------- I/O RELATED FUNCTIONS -------------------------------------- */
-
-/*
-void load_initial_model ( const real    waveletFreq,
-                          const integer numberOfCells,
-                          coeff_t *c,
-                          s_t     *s,
-                          v_t     *v,
-                          real    *rho);
-*/
-void load_initial_model ( const real    waveletFreq,
+void load_local_velocity_model ( const real    waveletFreq,
 													const integer dimmz,
 													const integer dimmx,
 													const integer dimmy,
@@ -74,12 +69,16 @@ void load_initial_model ( const real    waveletFreq,
 void write_snapshot ( char          *folder,
                       const int     suffix,
                       v_t          *v,
-                      const integer numberOfCells);
+                      const integer dimmz,
+											const integer dimmx,
+											const integer dimmy);
 
 void read_snapshot ( char          *folder,
                      const int     suffix,
                      v_t          *v,
-                     const integer numberOfCells);
+                     const integer dimmz,
+										 const integer dimmx,
+										 const integer dimmy);
 
 
 
@@ -104,7 +103,7 @@ void propagate_shot ( time_d        direction,
                      integer       nyf,
                      integer       stacki,
                      char          *folder,
-                     real          *dataflush,
-                     integer       datalen,
+                     real          *UNUSED(dataflush),
                      integer       dimmz,
-                     integer       dimmx);
+                     integer       dimmx,
+                     integer       dimmy);
