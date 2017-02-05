@@ -48,7 +48,7 @@ void check_memory_shot( const integer dimmz,
                         v_t     *v,
                         real    *rho)
 {
-#ifdef DEBUG
+#if defined(DEBUG)
     print_debug("Checking memory shot values");
 
     real UNUSED(value);
@@ -335,7 +335,7 @@ void load_local_velocity_model ( const real    waveletFreq,
     set_array_to_constant( s->br.xy, 0, cellsInVolume);
     set_array_to_constant( s->br.yy, 0, cellsInVolume);
 
-#ifdef DO_NOT_PERFORM_IO
+#if defined(DO_NOT_PERFORM_IO)
 
     /* initialize material coefficients */
     set_array_to_random_real( c->c11, cellsInVolume);
@@ -879,28 +879,28 @@ void EXCHANGE (const real*   sendbuf,
                     const integer line)
 {	
 #if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
-/* 	 	int err;
- 	   int tag = 100;
- 	   
- 	   print_debug( "         [BEFORE]MPI sendrecv [count:%d][dst:%d][src:%d] %s : %d", 
- 	 			message_size,  dst, src, file, line);
- 	
- 	   MPI_Status  statuses[2];
- 	   MPI_Request requests[2];
- 	   
- 	   MPI_Irecv( recvbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[0] );
- 	   MPI_Isend( sendbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[1] );
- 	   err = MPI_Waitall(2, requests, statuses);
- 	
- 	   print_debug( "         [AFTER ]MPI sendrecv                          %s : %d", 
- 	 			file, line);    
- 	
- 	   if ( err != MPI_SUCCESS )
- 	 	{
- 	 		print_error("MPI error %d!", err);
- 	 		abort();
- 	 	}
-		*/
+ 	 int err;
+   int tag = 100;
+   
+   print_debug( "         [BEFORE]MPI sendrecv [count:%d][dst:%d][src:%d] %s : %d", 
+ 			message_size,  dst, src, file, line);
+
+   MPI_Status  statuses[2];
+   MPI_Request requests[2];
+   
+   MPI_Irecv( recvbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[0] );
+   MPI_Isend( sendbuf, message_size, MPI_FLOAT, dst, tag, MPI_COMM_WORLD, &requests[1] );
+   err = MPI_Waitall(2, requests, statuses);
+
+   print_debug( "         [AFTER ]MPI sendrecv                          %s : %d", 
+ 			file, line);    
+
+   if ( err != MPI_SUCCESS )
+ 	{
+ 		print_error("MPI error %d!", err);
+ 		abort();
+ 	}
+	
 #endif
-}	;
+};
 
