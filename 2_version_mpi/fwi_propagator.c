@@ -128,6 +128,9 @@ void compute_component_vcell_TL (      real* restrict vptr,
                                  const integer        dimmz,
                                  const integer        dimmx)
 {
+	print_debug("OK so far..");
+
+
           real* restrict _vptr  __attribute__ ((aligned (64))) = vptr;
     const real* restrict _szptr __attribute__ ((aligned (64))) = szptr;
     const real* restrict _sxptr __attribute__ ((aligned (64))) = sxptr;
@@ -139,7 +142,9 @@ void compute_component_vcell_TL (      real* restrict vptr,
         for(integer x=nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for(integer z=nz0; z < nzf; z++)
             {
@@ -190,7 +195,9 @@ void compute_component_vcell_TR (      real* restrict vptr,
         for(integer x=nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for(integer z=nz0; z < nzf; z++)
             {
@@ -241,7 +248,9 @@ void compute_component_vcell_BR (      real* restrict  vptr,
         for(integer x=nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for(integer z=nz0; z < nzf; z++)
             {
@@ -293,7 +302,9 @@ void compute_component_vcell_BL (      real* restrict  vptr,
         for(integer x=nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for(integer z=nz0; z < nzf; z++)
             {
@@ -326,7 +337,7 @@ void velocity_propagator(v_t           v,
                          const integer dimmz,
                          const integer dimmx)
 {
-    print_debug("Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")", nz0,nzf,nx0,nxf,ny0,nyf);
+    print_debug("Integration limits are (z "I"-"I",x "I"-"I",y "I"-"I")",  nz0,nzf,nx0,nxf,ny0,nyf);
 
 #ifdef __INTEL_COMPILER
     #pragma forceinline recursive
@@ -405,7 +416,7 @@ void stress_propagator(s_t           s,
                        const integer dimmz,
                        const integer dimmx )
 {
-    print_debug("Integration limits of %s are (z "I"-"I",x "I"-"I",y "I"-"I")", nz0,nzf,nx0,nxf,ny0,nyf);
+    print_debug("Integration limits are (z "I"-"I",x "I"-"I",y "I"-"I")", nz0,nzf,nx0,nxf,ny0,nyf);
 
 #ifdef __INTEL_COMPILER
     #pragma forceinline recursive
@@ -563,7 +574,9 @@ void compute_component_scell_TR (s_t             s,
         for (integer x = nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for (integer z = nz0; z < nzf; z++ )
             {
@@ -659,7 +672,9 @@ void compute_component_scell_TL (s_t             s,
         for (integer x = nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for (integer z = nz0; z < nzf; z++ )
             {
@@ -756,7 +771,9 @@ void compute_component_scell_BR (s_t             s,
         for (integer x = nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for (integer z = nz0; z < nzf; z++ )
             {
@@ -853,7 +870,9 @@ void compute_component_scell_BL (s_t             s,
         for (integer x = nx0; x < nxf; x++)
         {
 #ifdef __INTEL_COMPILER
-            #pragma simd
+	#pragma simd
+#else
+	#pragma omp simd
 #endif
             for (integer z = nz0; z < nzf; z++ )
             {

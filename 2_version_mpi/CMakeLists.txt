@@ -27,7 +27,7 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-xHost")
+	set (CMAKE_C_FLAGS "-02")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	set (CMAKE_C_FLAGS "-xMIC-AVX512")
@@ -39,8 +39,8 @@ endif()
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
-# set (CMAKE_C_FLAGS "-g -std=c99 -qopenmp")
+# set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
+set (CMAKE_C_FLAGS "-g -Wall -std=c99 -qopenmp")
 
 
 #--------------------------------------
@@ -102,7 +102,6 @@ include_directories(
 add_executable(fwi.intel64
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
-	"../common/fwi_comms.c"
 	"./fwi_propagator.c"
 	"../common/fwi_kernel.c"
 	"../common/fwi_sched.c"

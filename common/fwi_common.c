@@ -188,6 +188,7 @@ void store_shot_parameters(int     shotid,
                            integer *dimmz,
                            integer *dimmx,
                            integer *dimmy,
+													 integer *LocalYPlanes,
                            char    *outputfolder, 
                            real    waveletFreq)
 {
@@ -206,12 +207,15 @@ void store_shot_parameters(int     shotid,
     fprintf(fp,  I"\n", (integer) *dimmz  );
     fprintf(fp,  I"\n", (integer) *dimmx  );
     fprintf(fp,  I"\n", (integer) *dimmy  );
+    fprintf(fp,  I"\n", (integer) *LocalYPlanes  );
     fprintf(fp, "%d\n",  (int    ) *nt_fwd );
     fprintf(fp, "%d\n",  (int    ) *nt_bwd );
     fprintf(fp, "%f\n",  (real   ) *dt     );
     fprintf(fp, "%d\n",  (int    ) *stacki );
+		
+		print_debug("Local Y planes %d", *LocalYPlanes);
 
-    fclose(fp);
+    safe_fclose(name, fp, __FILE__, __LINE__ );
 };
 
 void load_shot_parameters(int     shotid,
@@ -225,6 +229,7 @@ void load_shot_parameters(int     shotid,
                           integer *dimmz,
                           integer *dimmx,
                           integer *dimmy,
+													integer *LocalYPlanes,
                           char    *outputfolder,
                           real    waveletFreq)
 {
@@ -241,10 +246,13 @@ void load_shot_parameters(int     shotid,
     CHECK( fscanf(fp,  I"\n",  (integer*) dimmz  ) );
     CHECK( fscanf(fp,  I"\n",  (integer*) dimmx  ) );
     CHECK( fscanf(fp,  I"\n",  (integer*) dimmy  ) );
+    CHECK( fscanf(fp,  I"\n",  (integer*) LocalYPlanes  ) );
     CHECK( fscanf(fp, "%d\n",  (int*    ) nt_fwd ) );
     CHECK( fscanf(fp, "%d\n",  (int*    ) nt_bwd ) );
     CHECK( fscanf(fp, "%f\n",  (real*   ) dt     ) );
     CHECK( fscanf(fp, "%d\n",  (int*    ) stacki ) );
+
+		print_debug("Local Y planes %d", *LocalYPlanes);
 
     safe_fclose( name, fp, __FILE__, __LINE__);
 };

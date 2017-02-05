@@ -19,6 +19,14 @@
 #include "fwi_sched.h"
 #include "fwi_kernel.h"
 
+/*
+ * DISCLAIMER:
+ * The model contains (dimmz +2*HALO) * (dimmx +2HALO) * (dimmy +2*HALO) 
+ * cells. For now, it assumes that there are no boundary conditions (sponge)
+ * implemented.
+ * The initial velocity model should be loaded taking into account this
+ * criteria.
+ */
 
 int main(int argc, const char *argv[])
 {

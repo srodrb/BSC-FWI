@@ -6,7 +6,7 @@
 #BSUB -e "job.err"
 #BUSB -x
 #BSUB -R "span[ptile=1]"
-#BSUB -q bsc_debug
+#BSUB -q mic
 
 source ../Scripts/impi_mn3.sh
 

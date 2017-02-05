@@ -37,6 +37,10 @@
 typedef enum {RTM_KERNEL, FM_KERNEL} propagator_t;
 typedef enum {FORWARD   , BACKWARD, FWMODEL}  time_d;
 
+#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
+	#include "mpi.h"
+#endif
+
 double TOGB(size_t bytes);
 
 /*  Compiler compatiblity macros */
@@ -99,6 +103,7 @@ void store_shot_parameters(int     shotid,
                            integer *dimmz,
                            integer *dimmx,
                            integer *dimmy,
+													 integer *LocalYPlanes,
                            char    *outputfolder,
                            real    waveletFreq);
 
@@ -113,6 +118,7 @@ void load_shot_parameters(int     shotid,
                           integer *dimmz,
                           integer *dimmx,
                           integer *dimmy,
+													integer *LocalYPlanes,
                           char    *outputfolder,
                           real    waveletFreq);
 

@@ -29,12 +29,14 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     double start_t, end_t;
     int stacki;
     real dt,dz,dx,dy;
-    integer dimmz, dimmx, dimmy, forw_steps, back_steps;
+    integer dimmz, dimmx, dimmy, MaxYPlanesPerWorker, forw_steps, back_steps;
 
-    load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, &dz, &dx, &dy, &dimmz, &dimmx, &dimmy, outputfolder, waveletFreq );
+    load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps,
+				&dz, &dx, &dy, 
+				&dimmz, &dimmx, &dimmy,
+				&MaxYPlanesPerWorker,
+				outputfolder, waveletFreq );
 
-		fprintf(stderr, "----- STACKI: %d\n", stacki);
-    
 		const integer numberOfCells = dimmz * dimmx * dimmy;
 
     /* set LOCAL integration limits */
@@ -53,16 +55,19 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     print_debug("The length of local arrays is " I " cells", numberOfCells);
 
     /* allocate shot memory */
-    alloc_memory_shot  ( numberOfCells, &coeffs, &s, &v, &rho);
+    // alloc_memory_shot  ( numberOfCells, &coeffs, &s, &v, &rho);
+    alloc_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, &rho);
 
     /* load initial model from a binary file */
-    load_initial_model ( waveletFreq, numberOfCells, &coeffs, &s, &v, rho);
+    // load_initial_model ( waveletFreq, numberOfCells, &coeffs, &s, &v, rho);
+    load_local_velocity_model ( waveletFreq, dimmz, dimmx, ny0, nyf, &coeffs, &s, &v, rho);
 
     /* Allocate memory for IO buffer */
     real* io_buffer = (real*) __malloc( ALIGN_REAL, numberOfCells * sizeof(real) * WRITTEN_FIELDS );
 
     /* inspects every array positions for leaks. Enabled when DEBUG flag is defined */
-    check_memory_shot  ( numberOfCells, &coeffs, &s, &v, rho);
+    // check_memory_shot  ( numberOfCells, &coeffs, &s, &v, rho);
+    check_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, rho);
 
     switch( propagator )
     {
@@ -78,8 +83,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, dimmy);
 
         end_t = dtime();
 
@@ -95,8 +99,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, dimmy);
 
         end_t = dtime();
 
@@ -138,8 +141,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, dimmy);
 
         end_t = dtime();
 
@@ -281,6 +283,7 @@ int main(int argc, const char* argv[])
 				integer dimmx      = S.dimmx[i];
 				integer ppd        = S.ppd[i];
 				integer nworkers   = S.nworkers[i];
+				integer MaxYPlanesPerWorker = S.ppd[i];
 
         print_info("\n------ Computing %d-th frequency (%.2fHz).  -----\n", i, waveletFreq); 
 				
@@ -303,6 +306,7 @@ int main(int argc, const char* argv[])
                 store_shot_parameters ( shot, &stacki, &dt, &forw_steps, &back_steps, 
                                         &dz, &dx, &dy, 
                                         &dimmz, &dimmx, &dimmy, 
+																				&MaxYPlanesPerWorker,
                                         S.outputfolder, waveletFreq );
 
                 kernel( RTM_KERNEL, waveletFreq, shot, S.outputfolder, shotfolder);
@@ -327,7 +331,8 @@ int main(int argc, const char* argv[])
                     
                     store_shot_parameters ( shot, &stacki, &dt, &forw_steps, &back_steps, 
                                             &dz, &dx, &dy, 
-                                            &dimmz, &dimmx, &dimmy, 
+                                            &dimmz, &dimmx, &dimmy,
+																					 	&MaxYPlanesPerWorker,	
                                             S.outputfolder, waveletFreq );
 
                     kernel( FM_KERNEL , waveletFreq, shot, S.outputfolder, shotfolder);

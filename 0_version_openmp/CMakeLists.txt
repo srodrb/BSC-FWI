@@ -78,22 +78,22 @@ endif()
 #--------------------------------------
 #          Create fwi binary
 #--------------------------------------
-# include_directories(
-# 	"../common/"
-# 	"./")
-# 
-# add_executable(fwi.bin
-#  	"./fwi_main.c"	
-# 	"../common/fwi_constants.c"
-# 	"../common/fwi_common.c"
-# 	"../common/fwi_comms.c"
-# 	"../common/fwi_kernel.c"
-# 	"../common/fwi_sched.c"
-# 	"./fwi_propagator.c")
-# 
-# target_link_libraries(fwi.bin "-lm")
-# 
-# install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
+include_directories(
+	"../common/"
+	"./")
+
+add_executable(fwi.bin
+ 	"./fwi_main.c"	
+	"../common/fwi_constants.c"
+	"../common/fwi_common.c"
+	"../common/fwi_comms.c"
+	"../common/fwi_kernel.c"
+	"../common/fwi_sched.c"
+	"./fwi_propagator.c")
+
+target_link_libraries(fwi.bin "-lm")
+
+install (TARGETS fwi.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
 #--------------------------------------
 #    Create model generator utility
 #--------------------------------------
@@ -104,7 +104,7 @@ include_directories(
 add_executable(generateModel.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
- 	"../common/fwi_comms.c"
+	#"../common/fwi_comms.c"
 	"./fwi_propagator.c"
 	"../common/fwi_kernel.c"
 	"../common/fwi_sched.c"
@@ -123,7 +123,7 @@ include_directories(
 add_executable(generateSchedule.bin
 	"../common/fwi_constants.c"
 	"../common/fwi_common.c"
- 	"../common/fwi_comms.c"
+	#"../common/fwi_comms.c"
 	"./fwi_propagator.c"
 	"../common/fwi_kernel.c"
 	"../common/fwi_sched.c"

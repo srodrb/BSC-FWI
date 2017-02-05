@@ -27,57 +27,78 @@
 void kernel( propagator_t propagator, real waveletFreq, int shotid, char* outputfolder, char* shotfolder)
 {
     /* find ourselves into the MPI space */
-    int mpi_rank, Subdomains;
-    MPI_Comm_size( MPI_COMM_WORLD, &Subdomains);
-    MPI_Comm_rank( MPI_COMM_WORLD, &mpi_rank);
+    int rank, ranksize;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank);
+    MPI_Comm_size( MPI_COMM_WORLD, &ranksize);
+
+		/* aux variables, just to make it more readable */
+		const int FIRSTRANK = 0;
+		const int LASTRANK  = ranksize -1;  
     
     /* local variables */
     int stacki;
     double start_t, end_t;
     real dt,dz,dx,dy;
-    integer dimmz, dimmx, dimmy, forw_steps, back_steps;
+    integer dimmz;
+		integer dimmx;
+		integer dimmy;
+		integer MaxYPlanesPerWorker;
+		integer forw_steps;
+		integer back_steps;
 
 		/* load shot parameters */
-    load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, &dz, &dx, &dy, &dimmz, &dimmx, &dimmy, outputfolder, waveletFreq );
+    load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, 
+				&dz, &dx, &dy,
+				&dimmz, &dimmx, &dimmy,
+				&MaxYPlanesPerWorker,
+				outputfolder, waveletFreq );
 
-    /* Compute number of cell for each MPI rank and local integration limits */
-    const integer planesPerSubdomain = ((dimmy-2*HALO)/Subdomains);
-    const integer y0 = planesPerSubdomain * mpi_rank; 
-    const integer yF = y0 + planesPerSubdomain + 2*HALO; 
-    const integer edimmy = (yF - y0);
+		/* Max number of y-planes per worker does not differenciate between HALO or
+		 * maingrid planes! */
+
+		/* Compute the integration limits in order to load the correct slice from the input
+		 * velocity model. These are not the limits for the wave propagator! (they are local,
+		 * i.e. starts at zero!) */
+		const integer y0 = (rank == FIRSTRANK) ? 0     : (MaxYPlanesPerWorker * rank) - HALO;
+		const integer yf = (rank == LASTRANK ) ? dimmy : y0 + MaxYPlanesPerWorker;
+
+		/*
+		 * Compute integration limits for the wave propagator. It assumes that the volume
+		 * is local, so the indices start at zero
+		 */
+    const integer edimmy = (yf - y0);
+		const integer nz0 = 0;
+		const integer nx0 = 0;
+		const integer ny0 = 0;
+		const integer nzf = dimmz;
+		const integer nxf = dimmx;
+		const integer nyf = edimmy;
     const integer numberOfCells = dimmz * dimmx * edimmy;
+	
+		print_debug("number of cells in kernel() %d\n", numberOfCells);
+    print_debug("The length of local arrays is " I " cells", numberOfCells);
 
-    /* set GLOBAL integration limits */
-    const integer nz0 = 0;
-    const integer ny0 = 0;
-    const integer nx0 = 0;
-    const integer nzf = dimmz;
-    const integer nxf = dimmx;
-    const integer nyf = edimmy;
 
+    /* Compute number of cell for each MPI rank and local integtion limits */
     real    *rho;
     v_t     v;
     s_t     s;
     coeff_t coeffs;
 
-		print_debug("number of cells in kernel() %d\n", numberOfCells);
-    print_debug("The length of local arrays is " I " cells", numberOfCells);
 
     /* allocate shot memory */
-    alloc_memory_shot  ( dimmz, dimmx, edimmy, &coeffs, &s, &v, &rho);
+    alloc_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, &rho);
 
     /* load initial model from a binary file */
-    load_local_velocity_model ( waveletFreq, dimmz, dimmx, edimmy, &coeffs, &s, &v, rho);
+    load_local_velocity_model ( waveletFreq, dimmz, dimmx, y0, yf, &coeffs, &s, &v, rho);
 
     /* Allocate memory for IO buffer */
     real* io_buffer = (real*) __malloc( ALIGN_REAL, numberOfCells * sizeof(real) * WRITTEN_FIELDS );
 
     /* inspects every array positions for leaks. Enabled when DEBUG flag is defined */
-    check_memory_shot  ( dimmz, dimmx, edimmy, &coeffs, &s, &v, rho);
+    check_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, rho);
 
-    print_debug( "MPI rank " I " compute from y=" I " to=" I ". #planes per subdomain " I " ", 
-            mpi_rank, y0, yF, planesPerSubdomain);
-
+		/* Perform forward, backward or test propagations */
     switch( propagator )
     {
     case( RTM_KERNEL ):
@@ -92,8 +113,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, (nyf - ny0));
 
         end_t = dtime();
 
@@ -109,8 +129,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, (nyf - ny0));
 
         end_t = dtime();
 
@@ -120,7 +139,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
         print_info("Warning: we are not creating gradient nor preconditioner "
                    "fields, because IO is not enabled for this execution" );
 #else
-        if ( mpi_rank == 0 ) 
+        if ( rank == 0 ) 
         {
             char fnameGradient[300];
             char fnamePrecond[300];
@@ -155,8 +174,7 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
                          stacki,
                          shotfolder,
                          io_buffer,
-                         numberOfCells,
-                         dimmz, dimmx);
+                         dimmz, dimmx, (nyf - ny0) );
 
         end_t = dtime();
 
@@ -204,7 +222,7 @@ int main(int argc, char* argv[])
 				integer dimmz = S.dimmz[i];
 				integer dimmx = S.dimmx[i];
 				integer dimmy = S.dimmy[i];
-				integer ppd   = S.ppd[i];
+				integer MaxYPlanesPerWorker   = S.ppd[i];
 
         print_info("\n------ Computing %d-th frequency (%.2fHz).  -----\n", i, waveletFreq); 
 
@@ -221,7 +239,7 @@ int main(int argc, char* argv[])
             for(int shot=0; shot<S.nshots; shot++)
             {
                 char shotfolder[200];
-                sprintf(shotfolder, "%s/shot.%2.1f.%05d", S.outputfolder, waveletFreq, shot);
+                sprintf(shotfolder, "%s/shot.%2.2fHz.%03d", S.outputfolder, waveletFreq, shot);
                 
                 if ( mpi_rank == 0 ) 
                 {
@@ -230,6 +248,7 @@ int main(int argc, char* argv[])
                     store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps,
                                            &dz, &dx, &dy, 
                                            &dimmz, &dimmx, &dimmy, 
+																					 &MaxYPlanesPerWorker,
                                            S.outputfolder, waveletFreq );
                 }
 
@@ -252,7 +271,7 @@ int main(int argc, char* argv[])
                 for(int shot=0; shot<S.nshots; shot++)
                 {
                     char shotfolder[200];
-                    sprintf(shotfolder, "%s/test.%05d.shot.%2.1f.%05d", 
+                    sprintf(shotfolder, "%s/test.%05d.shot.%2.2fHz.%03d", 
                             S.outputfolder, test, waveletFreq, shot);
 
                     if ( mpi_rank == 0)
@@ -261,7 +280,8 @@ int main(int argc, char* argv[])
 
                         store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps, 
                                                &dz, &dx, &dy, 
-                                               &dimmz, &dimmx, &dimmy, 
+                                               &dimmz, &dimmx, &dimmy,
+																							 &MaxYPlanesPerWorker,
                                                S.outputfolder, waveletFreq );
                     }
 
