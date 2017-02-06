@@ -20,6 +20,7 @@
 	
 #include <stdlib.h>
 #include <stdio.h>
+// // // // // // // // // #include "fwi_common.h"
 #include <mpi.h>
 
 typedef struct{

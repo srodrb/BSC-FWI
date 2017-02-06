@@ -41,44 +41,53 @@ void kernel ( propagator_t propagator,
 							real waveletFreq, 
 							int shotid, 
 							char* outputfolder, 
-							int nworkers, 
-							int ppw )
+							int nworkers )
 {
-
-#ifdef DEBUG
-	fprintf(stderr, "%s input arguments: %d %f %d %s %d %d\n", __FUNCTION__, propagator, waveletFreq, shotid, outputfolder, nworkers, ppw );
-#endif
-
-
 	/* allocate slave nodes */
 		booster_alloc_t workers = allocate_workers( nworkers, 1, shotid );
 
  		/* load simulation parameters */		
     real dt,dz,dx,dy;
     integer dimmz, dimmx, dimmy;
-    int stacki, forw_steps, back_steps;
+    int stacki, forw_steps, back_steps, MaxYPlanesPerWorker;
+
+		const int FIRSTWORKER = 0;
+		const int LASTWORKER  = nworkers -1;
 
     char shotfolder[200];
-    sprintf( shotfolder, "%s/shot.%05d", outputfolder, shotid);
+    sprintf(shotfolder, "%s/shot.%2.2fHz.%03d", outputfolder, waveletFreq, shot);
     load_shot_parameters( shotid, &stacki, &dt, 
 													&forw_steps, &back_steps, 
 													&dz, &dx, &dy, 
 													&dimmz, &dimmx, &dimmy, 
+													&MaxYPlanesPerWorker,
 													outputfolder,
 													waveletFreq);
 
 		for(int worker = 0; worker < nworkers; worker++)
 		{
-			/* compute the number of planes that needs to be processed */
-			if ( worker < (nworkers -1) || (dimmy % ppw) == 0)
-				dimmy = ppw;
-			else
-				dimmy = dimmy % ppw;
+			/* Compute the integration limits in order to load the correct slice from the input
+			 * velocity model. These are not the limits for the wave propagator! (they are local,
+			 * i.e. starts at zero!) */
+			const integer y0 = (rank == FIRSTWORKER) ? 0     : (MaxYPlanesPerWorker * rank) - HALO;
+			const integer yf = (rank == LASTWORKER) ? dimmy : y0 + MaxYPlanesPerWorker;
 
-			fprintf(stderr, "%d-th worker is processing %d y-planes\n", worker, dimmy);
-    	
-			const integer numberOfCells = dimmz * dimmx * dimmy;
-			
+			/*
+			 * Compute integration limits for the wave propagator. It assumes that the volume
+			 * is local, so the indices start at zero
+			 */
+	    const integer edimmy = (yf - y0);
+			const integer nz0 = 0;
+			const integer nx0 = 0;
+			const integer ny0 = 0;
+			const integer nzf = dimmz;
+			const integer nxf = dimmx;
+			const integer nyf = edimmy;
+	    const integer numberOfCells = dimmz * dimmx * edimmy;
+		
+			print_debug("number of cells in kernel() %d\n", numberOfCells);
+	    print_debug("The length of local arrays is " I " cells", numberOfCells);
+	
 			#pragma omp task onto(workers.intercomm, worker) in(propagator, shotid, [200]shotfolder) copy_deps
 			{
 				real    *rho;
@@ -87,10 +96,16 @@ void kernel ( propagator_t propagator,
     		coeff_t coeffs;
 
 				/* allocate shot memory */
-    		alloc_memory_shot  ( numberOfCells, &coeffs, &s, &v, &rho);
+    		alloc_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, &rho);
 
 				/* load initial model from a binary file */
-				load_initial_model ( waveletFreq, numberOfCells, &coeffs, &s, &v, rho);
+				load_initial_model ( waveletFreq, dimmz, dimmx, y0, yf, &coeffs, &s, &v, rho);
+
+				/* Allocate memory for IO buffer */
+				// real* io_buffer = (real*) __malloc( ALIGN_REAL, numberOfCells * sizeof(real) * WRITTEN_FIELDS );
+
+    		/* inspects every array positions for leaks. Enabled when DEBUG flag is defined */
+    		check_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, rho);
 
 				/* some variables for timming */
 				double start_t, end_t;
@@ -104,39 +119,34 @@ void kernel ( propagator_t propagator,
                         v, s, coeffs, rho,
                         forw_steps, back_steps -1,
                         dt,dz,dx,dy,
-                        0, dimmz, 0, dimmx, 0, dimmy,
+                        nz0, nzf, nx0, nxf, ny0, nyf,
                         stacki,
                         shotfolder,
-                        NULL,
-                        numberOfCells,
-                        dimmz, dimmx);
+												NULL,
+                        dimmz, dimmx, (nyf - ny0));
 
 						end_t = dtime();
-
-        		fprintf(stderr, "Forward propagation finished in %lf seconds\n", \
-												end_t - start_t );
+        
+						print_stats("Forward propagation finished in %lf seconds", end_t - start_t );
 
 						start_t = dtime();
         		propagate_shot ( BACKWARD,
                         v, s, coeffs, rho,
                         forw_steps, back_steps -1,
                         dt,dz,dx,dy,
-                        0, dimmz, 0, dimmx, 0, dimmy,
+                        nz0, nzf, nx0, nxf, ny0, nyf,
                         stacki,
                         shotfolder,
                         NULL,
-                        numberOfCells,
-                        dimmz, dimmx);
+                        dimmz, dimmx, (nyf - ny0));
 
 						end_t = dtime();
 
-        		fprintf(stderr, "Backward propagation finished in %lf seconds\n", \
-												end_t - start_t );
-
+        		print_stats("Backward propagation finished in %lf seconds", end_t - start_t );
 						
 						/* store gradient and preconditioner fields */	
-						store_field( shotfolder, shotid, GRADIENT      , &v, numberOfCells );
-						store_field( shotfolder, shotid, PRECONDITIONER, &v, numberOfCells );
+						// store_field( shotfolder, shotid, GRADIENT      , &v, numberOfCells );
+						// store_field( shotfolder, shotid, PRECONDITIONER, &v, numberOfCells );
         		
 						break;
       		}
@@ -148,28 +158,26 @@ void kernel ( propagator_t propagator,
                         v, s, coeffs, rho,
                         forw_steps, back_steps -1,
                         dt,dz,dx,dy,
-                        0, dimmz, 0, dimmx, 0, dimmy,
+                        nz0, nzf, nx0, nxf, ny0, nyf,
                         stacki,
                         shotfolder,
                         NULL,
-                        numberOfCells,
-                        dimmz, dimmx);
+                        dimmz, dimmx, (nyf - ny0));
 
 						end_t = dtime();
-
-        		fprintf(stderr, "Forward Modelling finished in %lf seconds\n",  \
-												end_t - start_t );
-       
+        
+						print_stats("Forward Modelling finished in %lf seconds", end_t - start_t );
 			 			break;
       		}
       		default:
       		{
-        		fprintf(stderr, "Invalid propagation identifier\n");
+        		print_error("Invalid propagation identifier");
         		abort();
       		}
     		}
 				/* deallocate shot memory */
    			free_memory_shot  ( &coeffs, &s, &v, &rho);
+				// __free( io_buffer );
 			} /* end of ompss pragma running on workers*/
 		} /* end of work scheduling loop */
 		#pragma omp taskwait
@@ -188,9 +196,8 @@ int main(int argc, char *argv[])
 
   for(int i=0; i<S.nfreqs; i++)
   {
-		fprintf(stderr, "At this frequency, we'll allocate %d slaves and %d workers\n", S.nshots, S.nworkers[i] );
 		
-		real freq        = S.freq[i];
+		real waveletFreq = S.freq[i];
 		integer stacki   = S.stacki[i];
 		real dt          = S.dt[i];
 		integer forws    = S.forws[i];
@@ -201,37 +208,39 @@ int main(int argc, char *argv[])
 		integer dimmz    = S.dimmz[i];
 		integer dimmx    = S.dimmx[i];
 		integer dimmy    = S.dimmy[i];
-		integer ppd      = S.ppd[i];
+		integer MaxYPlanesPerWorker = S.ppd[i];
 		integer nworkers = S.nworkers[i];
 
+		print_info("At %.2Hz, we'll allocate %d slaves and %d workers", waveletFreq,  S.nshots, S.nworkers[i] );
 
 		/* allocate slave nodes */
 		booster_alloc_t slaves = allocate_slaves( S.nshots );
 
 		for(int grad=0; grad<S.ngrads; grad++) /* inversion iterations */
 		{
-			fprintf(stderr, "Processing %d-th gradient iteration.\n", grad);
+			print_info("Processing %d-th gradient iteration.", grad);
 
 			for(int shot=0; shot<S.nshots; shot++)
 			{
 				#pragma omp task onto(slaves.intercomm, shot) in([200]S.outputfolder) label(rtm_kernel) copy_deps
 				{
 
-					fprintf(stderr, "stacki %d forws %d backs %d\n", stacki, forws, backs );
+					print_debug("stacki %d forws %d backs %d", stacki, forws, backs );
 
 					char shotfolder[200];
-					sprintf( shotfolder, "%s/shot.%05d", S.outputfolder, shot);
+          sprintf(shotfolder, "%s/shot.%2.2fHz.%03d", S.outputfolder, waveletFreq, shot);
 					create_folder( shotfolder );
 					
 					store_shot_parameters ( shot, &stacki, &dt, &forws, &backs, 
 																	&dz, &dx, &dy, 
-																	&dimmz, &dimmx, &dimmy, 
+																	&dimmz, &dimmx, &dimmy,
+																	&MaxYPlanesPerWorker,
 																	S.outputfolder,
-																	freq);
+																	waveletFreq);
 
-					kernel( RTM_KERNEL, freq, shot, S.outputfolder, nworkers, ppd );
+					kernel( RTM_KERNEL, waveletFreq, shot, S.outputfolder, nworkers);
 					
-					fprintf(stderr, "       %d-th shot processed\n", shot);
+          print_info("\tGradient loop processed for %d-th shot", shot);
 				}
 			}
 			#pragma omp taskwait
@@ -241,25 +250,27 @@ int main(int argc, char *argv[])
 	
 			for(int test=0; test<S.ntests; test++)
 			{
-				fprintf(stderr, "Processing %d-th test iteration.\n", S.ntests);
+				print_info("Processing %d-th test iteration.", S.ntests);
 				 
 				for(int shot=0; shot<S.nshots; shot++)
 				{
 					#pragma omp task onto(slaves.intercomm, shot) in([200]S.outputfolder) label(test_iterations) copy_deps
 					{
 						char shotfolder[200];
-						sprintf(shotfolder, "%s/shot.%05d", S.outputfolder, shot);
+            sprintf(shotfolder, "%s/test.%05d.shot.%2.2fHz.%03d", 
+                    S.outputfolder, test, waveletFreq, shot);
 						create_folder( shotfolder );
 					
 						store_shot_parameters ( shot, &stacki, &dt, &forws, &backs, 
 																	&dz, &dx, &dy, 
 																	&dimmz, &dimmx, &dimmy, 
+																	&MaxYPlanesPerWorker,
 																	S.outputfolder,
 																	freq);
 
-						kernel( FM_KERNEL , freq, shot, S.outputfolder, nworkers, ppd );
+						kernel( FM_KERNEL , freq, shot, S.outputfolder, nworkers);
 				
-						fprintf(stderr, "       %d-th shot processed\n", shot);
+            print_info("\t\tTest loop processed for the %d-th shot", shot);
 					}// end of ompss pragma
 				}
 				#pragma omp taskwait
@@ -267,7 +278,7 @@ int main(int argc, char *argv[])
 		} /* end of test loop */
     deep_booster_free(&slaves.intercomm);
   } /* end of frequency loop */
-  fprintf(stderr, "-------- FWI propagator Finished ------------------- \n");
+  print_info("-------- FWI propagator Finished ------------------- \n");
 
 	/* clean UP */
 	int rank, spawn_rank, size;
@@ -276,14 +287,14 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank( spawn_comm, &spawn_rank );
 	
 	/* wait for all the processes to finish */
-	fprintf(stderr, "Waiting for all processes to finish\n");
+	print_info("Waiting for all processes to finish");
 	MPI_Barrier( MPI_COMM_WORLD );
 
-	fprintf(stderr, "Waiting for nanos runtime to finish\n");
+	print_info("Waiting for Nanos runtime to finish");
 	/* explicitely finalize nanos runtime */
 	nanos_mpi_finalize();
 
-	fprintf(stderr, "End of the program.\n");
+	print_info("End of the program");
 	
   return 0;
 }

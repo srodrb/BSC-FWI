@@ -28,25 +28,21 @@ booster_alloc_t initialize_alloc_attr( MPI_Comm comm, int hosts, int pph, int of
 	if ( attributes.intercomm != MPI_COMM_NULL ){
 		return ( attributes );
 	} else {
-		fprintf(stderr, "ERROR: OmpSs offload could not allocate some nodes\n");
+		// print_error("OmpSs offload could not allocate some nodes");
 		abort();
 	}
 };
 
 booster_alloc_t allocate_slaves( int hosts )
 {
-#ifdef DEBUG
-	fprintf(stderr, "Master node is allocating %d slave nodes\n", hosts);
-#endif
+	// print_debug("Master node is allocating %d slave nodes", hosts);
 
 	return ( initialize_alloc_attr( MPI_COMM_WORLD, hosts, 1, 0) );
 };
 
 booster_alloc_t allocate_workers( int hosts, int pph, int id )
 {
-#ifdef DEBUG
-	fprintf(stderr, "%d-th slave node is allocating %d worker nodes\n", id, hosts);
-#endif
+	// print_debug("%d-th slave node is allocating %d worker nodes\n", id, hosts);
 
 	return ( initialize_alloc_attr ( MPI_COMM_SELF, hosts, pph, hosts * id) );
 };

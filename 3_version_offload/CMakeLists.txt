@@ -23,7 +23,7 @@ endif()
 #--------------------------------------
 # set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
 set (CMAKE_C_FLAGS "--ompss --no-copy-deps")
-add_definitions ("-DDISTRIBUTED_MEMORY_RUN")
+add_definitions ("-DDISTRIBUTED_MEMORY_IMPLEMENTATION")
 
 
 #--------------------------------------
@@ -37,6 +37,16 @@ else()
 	message(STATUS "Input/Output is disabled.")
 	add_definitions("-DDO_NOT_PERFORM_IO")
 endif()
+#--------------------------------------
+#   Configure release
+#--------------------------------------
+set (debug "Debug mode enabled" OFF)
+
+if (debug)
+	message(STATUS "Debug mode enabled")
+	add_definitions ("-DDEBUG")
+endif()
+
 
 #--------------------------------------
 #       Configure statistics gathering
