@@ -25,8 +25,6 @@ void set_array_to_random_real( real* restrict array, const integer length)
 {
     const real randvalue = rand() / (1.0 * RAND_MAX);
 
-    print_debug("Array is being initialized to %f", randvalue);
-
     for( integer i = 0; i < length; i++ )
         array[i] = randvalue;
 }

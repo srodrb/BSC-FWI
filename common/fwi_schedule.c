@@ -171,11 +171,12 @@ int main(int argc, char *argv[])
 				nworkers += 1;
 		}
 
-		print_info("  ------------------------------------------------------------------------------------");
-		print_info("	There are %d y-planes to compute, each worker can hold %d of these planes", dimmy, ppd);
-		print_info("	At this frequency (%f Hz) we'll need %d workers per shot", waveletFreq, nworkers );
-		print_info("	There are %d shots to be computed, so %d slave nodes are needed.", nshots, nshots );
-		print_info("  ------------------------------------------------------------------------------------\n");
+		printf("  ------------------------------------------------------------------------------------\n\n");
+		printf("                                FWI SCHEDULE GENERATOR\n");
+		printf("	There are %d y-planes to compute, each worker can hold %d of these planes\n", dimmy, ppd);
+		printf("	At this frequency (%f Hz) we'll need %d workers per shot\n", waveletFreq, nworkers );
+		printf("	There are %d shots to be computed, so %d slave nodes are needed.\n", nshots, nshots );
+		printf("  ------------------------------------------------------------------------------------\n\n");
 	
 		CHECK( fprintf( fschedule, "%f %d %d %d %f %f %f %f %d %d %d %d %d\n", 
 					waveletFreq, forw_steps, back_steps, stacki, dt, dz, dy, dx, dimmz, dimmx, dimmy, ppd, nworkers));

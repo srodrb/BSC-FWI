@@ -10,7 +10,7 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "--Wn,-O0")
+	set (CMAKE_C_FLAGS "--Wn,-xHost")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	set (CMAKE_C_FLAGS "--Wn,-xMIC-AVX512")
@@ -21,7 +21,7 @@ endif()
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-# set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
+# set (CMAKE_C_FLAGS "--ompss --no-copy-deps -std=c99 --Wn,-fma --Wn,-align --Wn,-finline-functions")
 set (CMAKE_C_FLAGS "--ompss --no-copy-deps")
 add_definitions ("-DDISTRIBUTED_MEMORY_IMPLEMENTATION")
 
@@ -91,40 +91,3 @@ add_executable(fwi.intel64
  	"./fwi_main.c")
 
 install (TARGETS fwi.intel64 DESTINATION "${CMAKE_SOURCE_DIR}/")
-#--------------------------------------
-#    Create model generator utility
-#--------------------------------------
-# include_directories(
-# 	"../common/"
-# 	"./")
-# add_executable(generateModel.bin
-# 	"../common/fwi_constants.c"
-# 	"../common/fwi_common.c"
-# 	"../common/fwi_kernel.c"
-# 	"../common/fwi_sched.c"
-# 	"./fwi_propagator.c"
-# 	"../common/fwi_generatemodel.c")
-# 
-# set_target_properties(generateModel.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
-# install (TARGETS generateModel.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
-# 
-# #--------------------------------------
-# #   Create model scheduler utility
-# #---------------------------------------
-# include_directories(
-# 	"../common/"
-# 	"./")
-# add_executable(generateSchedule.bin
-# 	"../common/fwi_constants.c"
-# 	"../common/fwi_common.c"
-# 	"../common/fwi_kernel.c"
-# 	"../common/fwi_sched.c"
-# 	"./fwi_propagator.c"
-# 	"../common/fwi_schedule.c")
-# 
-# set_target_properties(generateSchedule.bin PROPERTIES CMAKE_C_FLAGS "-Wall -O2")
-# install (TARGETS generateSchedule.bin DESTINATION "${CMAKE_SOURCE_DIR}/")
-
-
-
-

@@ -21,7 +21,7 @@ export PPN_SN=1
 export WN=2
 export PPN_WN=1
 
-source ../Scripts/offload_mn3.sh
+source ./environment_sdv.sh
 
 mkdir -p .tmpdir
 
@@ -45,7 +45,6 @@ export I_MPI_FABRICS="shm:dapl"
 export I_MPI_DAPL_UD=enable
 export I_MPI_DAPL_PROVIDER=ofa-v2-mlx4_0-1u
 
-bin=fwi.intel64
 
 # mpiexec.hydra -hostlist $(hostname) -np 1 ./$bin ../SetupParams/fwi_params.txt ../SetupParams/fwi_frequencies.txt
-mpiexec.hydra -hostlist $(hostname) -np 1 ./trace.sh ./$bin fwi_schedule.txt
+mpiexec.hydra -hostlist $(hostname) -np 1 ./fwi.intel64 fwi_schedule.txt

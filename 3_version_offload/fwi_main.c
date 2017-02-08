@@ -39,12 +39,12 @@
  */
 void kernel ( propagator_t propagator, 
 							real waveletFreq, 
-							int shotid, 
+							int shot, 
 							char* outputfolder, 
 							int nworkers )
 {
 	/* allocate slave nodes */
-		booster_alloc_t workers = allocate_workers( nworkers, 1, shotid );
+		booster_alloc_t workers = allocate_workers( nworkers, 1, shot );
 
  		/* load simulation parameters */		
     real dt,dz,dx,dy;
@@ -56,7 +56,7 @@ void kernel ( propagator_t propagator,
 
     char shotfolder[200];
     sprintf(shotfolder, "%s/shot.%2.2fHz.%03d", outputfolder, waveletFreq, shot);
-    load_shot_parameters( shotid, &stacki, &dt, 
+    load_shot_parameters( shot, &stacki, &dt, 
 													&forw_steps, &back_steps, 
 													&dz, &dx, &dy, 
 													&dimmz, &dimmx, &dimmy, 
@@ -69,8 +69,8 @@ void kernel ( propagator_t propagator,
 			/* Compute the integration limits in order to load the correct slice from the input
 			 * velocity model. These are not the limits for the wave propagator! (they are local,
 			 * i.e. starts at zero!) */
-			const integer y0 = (rank == FIRSTWORKER) ? 0     : (MaxYPlanesPerWorker * rank) - HALO;
-			const integer yf = (rank == LASTWORKER) ? dimmy : y0 + MaxYPlanesPerWorker;
+			const integer y0 = (worker == FIRSTWORKER) ? 0     : (MaxYPlanesPerWorker * worker) - HALO;
+			const integer yf = (worker == LASTWORKER) ? dimmy : y0 + MaxYPlanesPerWorker;
 
 			/*
 			 * Compute integration limits for the wave propagator. It assumes that the volume
@@ -88,7 +88,7 @@ void kernel ( propagator_t propagator,
 			print_debug("number of cells in kernel() %d\n", numberOfCells);
 	    print_debug("The length of local arrays is " I " cells", numberOfCells);
 	
-			#pragma omp task onto(workers.intercomm, worker) in(propagator, shotid, [200]shotfolder) copy_deps
+			#pragma omp task onto(workers.intercomm, worker) in(propagator, shot, [200]shotfolder) copy_deps
 			{
 				real    *rho;
     		v_t     v;
@@ -99,7 +99,7 @@ void kernel ( propagator_t propagator,
     		alloc_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, &rho);
 
 				/* load initial model from a binary file */
-				load_initial_model ( waveletFreq, dimmz, dimmx, y0, yf, &coeffs, &s, &v, rho);
+				load_local_velocity_model ( waveletFreq, dimmz, dimmx, y0, yf, &coeffs, &s, &v, rho);
 
 				/* Allocate memory for IO buffer */
 				// real* io_buffer = (real*) __malloc( ALIGN_REAL, numberOfCells * sizeof(real) * WRITTEN_FIELDS );
@@ -266,9 +266,9 @@ int main(int argc, char *argv[])
 																	&dimmz, &dimmx, &dimmy, 
 																	&MaxYPlanesPerWorker,
 																	S.outputfolder,
-																	freq);
+																	waveletFreq);
 
-						kernel( FM_KERNEL , freq, shot, S.outputfolder, nworkers);
+						kernel( FM_KERNEL , waveletFreq, shot, S.outputfolder, nworkers);
 				
             print_info("\t\tTest loop processed for the %d-th shot", shot);
 					}// end of ompss pragma

@@ -49,13 +49,14 @@ double TOGB(size_t bytes);
     #define __assume(_cond) do { if (!(_cond)) __builtin_unreachable(); } while (0)
 #endif
 
-/*  Compiler macro to suppress unused variable warnings */
-#ifdef UNUSED
-#elif defined(__GNUC__)
-    #define UNUSED(x) (x) __attribute__((unused))
-#else
+/*  Compiler macro to suppress unused variable warnings:
+ *  This throws an ambiguity error in Mercurium!  */
+// #ifdef UNUSED
+// #elif defined(__GNUC__)
+//   #define UNUSED(x) (x) __attribute__((unused))
+//#else
     #define UNUSED(x) x
-#endif
+//#endif
 
 #define CHECK(error) { checkErrors((error), __FILE__, __LINE__); }
 static inline void checkErrors(const integer error, const char *filename, int line)

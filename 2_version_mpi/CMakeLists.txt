@@ -27,7 +27,7 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-02")
+	set (CMAKE_C_FLAGS "-xHost")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	set (CMAKE_C_FLAGS "-xMIC-AVX512")
@@ -39,8 +39,8 @@ endif()
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-# set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
-set (CMAKE_C_FLAGS "-g -Wall -std=c99 -qopenmp")
+set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
+# set (CMAKE_C_FLAGS "-g -Wall -std=c99 -qopenmp")
 
 
 #--------------------------------------
