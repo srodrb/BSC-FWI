@@ -42,7 +42,7 @@ message(STATUS "Compiler Id ${CMAKE_C_COMPILER_ID}")
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -qopenmp -fma -align -finline-functions")
 else()
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fopenmp")
+	set (CMAKE_C_FLAGS "-O3 -std=gnu99 -fopenmp")
 endif()
 
 #--------------------------------------
@@ -54,7 +54,7 @@ if (debug)
 	message(STATUS "Debug mode enabled")
 	add_definitions ("-DDEBUG")
 else()
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused-result")
+	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
 endif()
 
 

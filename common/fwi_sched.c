@@ -101,7 +101,7 @@ schedule_t load_schedule( const char* filename )
 #if defined(SHARED_MEMORY_RUN)
 		if ( S.nworkers[i] != 1 ) {
 			print_error("This execution requieres more than one worker to be computed. Please check the schedule file.");
-			// abort();
+			abort();
 		}
 #endif
 	}

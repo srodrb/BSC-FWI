@@ -49,6 +49,15 @@ int main(int argc, const char *argv[])
 		/* Load schedule file */
 		schedule_t S = load_schedule(argv[1]);
 
+		/*
+	 	* Modify input parameters according to FWIDIR value
+	 	*/
+		char foldername[500];
+		char* fwipath = read_env_variable("FWIDIR");
+		sprintf( foldername, "%s/InputModels", fwipath);
+		create_folder(foldername);
+
+
 		/* Generate one velocity model per frequency */
     for(int i=0; i<S.nfreqs; i++)
     {
@@ -62,7 +71,7 @@ int main(int argc, const char *argv[])
 
 				/* generate complete path for output model */
         char modelname[500];
-        sprintf( modelname, "../InputModels/velocitymodel_%.2f.bin", waveletFreq );
+        sprintf( modelname, "%s/velocitymodel_%.2f.bin", foldername, waveletFreq );
 
         FILE* model = safe_fopen( modelname, "wb", __FILE__, __LINE__);
 
