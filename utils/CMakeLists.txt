@@ -5,7 +5,18 @@ project(FWI C)
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-set (CMAKE_C_FLAGS "-g -std=c99 -O2")
+
+message(STATUS "Compiler Id ${CMAKE_C_COMPILER_ID}")
+
+#---------------------------------------------------
+# Configure compiler flags for Intel/GCC compilers
+#--------------------------------------------------
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -qopenmp -fma -align -finline-functions")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fopenmp")
+endif()
+
 add_definitions ("-DSHARED_MEMORY_IMPLEMENTATION")
 
 #--------------------------------------
@@ -16,6 +27,8 @@ set (debug "Debug mode enabled" OFF)
 if (debug)
 	message(STATUS "Debug mode enabled")
 	add_definitions ("-DDEBUG")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused-result")
 endif()
 
 #--------------------------------------

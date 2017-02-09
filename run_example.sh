@@ -17,7 +17,8 @@ color_reset=`tput sgr0`
 # compile the schedule and model generator utilities
 echo "${color_green}------------- Compiling scheduler and model generator binaries${color_reset}"
 cd utils
-source environment.sh
+source environment_$2.sh
+mkdir -p build
 cd build
 rm -rf *
 cmake -DCMAKE_C_COMPILER=gcc -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE ..
@@ -36,6 +37,7 @@ echo "${color_reset}"
 echo "${color_green}------------- Compiling $1 FWI version code${color_reset}"
 cd ../$1
 source environment_$2.sh
+mkdir -p build
 cd build
 rm -rf *
 cmake -Darchitecture=generic -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE -Dcollect-stats=OPTION_STATS_VALUE ..

@@ -7,18 +7,17 @@ project(FWI C)
 #--------------------------------------
 find_package(MPI REQUIRED QUIET)
 
-message(STATUS "--------------------------------------")
-message(STATUS "----[MPI ENABLED] setting:            ")
-message(STATUS "---- MPI_C_COMPILER:      ${MPI_C_COMPILER}")
-message(STATUS "---- MPI_C_COMPILE_FLAGS: ${MPI_C_COMPILE_FLAGS}")
-message(STATUS "---- MPI_C_INCLUDE_PATH:  ${MPI_C_INCLUDE_PATH}")
-message(STATUS "---- MPI_C_LINK_FLAGS:    ${MPI_C_LINK_FLAGS}")
-message(STATUS "---- MPI_C_LIBRARIES:     ${MPI_C_LIBRARIES}")
-message(STATUS "--------------------------------------")
+message(STATUS "-------------------------------------------------")
+message(STATUS "---- MPI setting:                                ")
+message(STATUS "---- MPI_C_COMPILER:      ${MPI_C_COMPILER}      ")
+message(STATUS "---- MPI_C_COMPILE_FLAGS: ${MPI_C_COMPILE_FLAGS} ")
+message(STATUS "---- MPI_C_INCLUDE_PATH:  ${MPI_C_INCLUDE_PATH}  ")
+message(STATUS "---- MPI_C_LINK_FLAGS:    ${MPI_C_LINK_FLAGS}    ")
+message(STATUS "---- MPI_C_LIBRARIES:     ${MPI_C_LIBRARIES}     ")
+message(STATUS "-------------------------------------------------")
 
 include_directories(${MPI_C_INCLUDE_PATH})
 add_definitions("-DDISTRIBUTED_MEMORY_IMPLEMENTATION")
-
 
 #--------------------------------------
 # Configure high-level compiler flags
@@ -35,13 +34,16 @@ else()
 	message (FATAL_ERROR "Invalid architecture descriptor!")
 endif()
 
+message(STATUS "Compiler Id ${CMAKE_C_COMPILER_ID}")
 
-#--------------------------------------
-#   Common compilation flags, if any.
-#--------------------------------------
-set (CMAKE_C_FLAGS "-std=c99 -qopenmp -fma -align -finline-functions")
-# set (CMAKE_C_FLAGS "-g -Wall -std=c99 -qopenmp")
-
+#---------------------------------------------------
+# Configure compiler flags for Intel/GCC compilers
+#--------------------------------------------------
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -qopenmp -fma -align -finline-functions")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fopenmp")
+endif()
 
 #--------------------------------------
 #   Configure release
@@ -51,6 +53,8 @@ set (debug "Debug mode enabled" OFF)
 if (debug)
 	message(STATUS "Debug mode enabled")
 	add_definitions ("-DDEBUG")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused-result")
 endif()
 
 
@@ -90,6 +94,16 @@ if (use-nmve)
 else()
 	message(STATUS "GPFS system will be used for local I/O")
 endif()
+
+#--------------------------------------
+#        Use NMVe local storage
+#--------------------------------------
+message(STATUS "----------------------------------------")
+message(STATUS "CMAKE_C_COMPILER:               ${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_C_FLAGS:                  ${CMAKE_C_FLAGS}")
+message(STATUS "CMAKE_C_INCLUDE_PATH:           ${CMAKE_C_INCLUDE_PATH}")
+message(STATUS "CMAKE_C_LIBRARIES:              ${CMAKE_C_LIBRARIES}")
+message(STATUS "----------------------------------------")
 
 
 #--------------------------------------
