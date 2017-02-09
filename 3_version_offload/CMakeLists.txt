@@ -10,21 +10,31 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "--Wn,-xHost")
+	set (BACKEND_COMPILER_FLAGS "--Wn,-xHost")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
-	set (CMAKE_C_FLAGS "--Wn,-xMIC-AVX512")
+	set (BACKEND_COMPILER_FLAGS "--Wn,-xMIC-AVX512")
 else()
 	message (FATAL_ERROR "Invalid architecture descriptor!")
 endif()
 
+add_definitions ("-DDISTRIBUTED_MEMORY_IMPLEMENTATION")
+
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-# set (CMAKE_C_FLAGS "--ompss --no-copy-deps -std=c99 --Wn,-fma --Wn,-align --Wn,-finline-functions")
-set (CMAKE_C_FLAGS "--ompss --no-copy-deps")
-add_definitions ("-DDISTRIBUTED_MEMORY_IMPLEMENTATION")
+set (CMAKE_C_FLAGS "--ompss --no-copy-deps -g")
 
+#---------------------------------------------------
+# Configure compiler flags for Intel/GCC compilers
+#--------------------------------------------------
+message(STATUS "Compiler Id ${CMAKE_C_COMPILER_ID}")
+
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${BACKEND_COMPILER_FLAGS} --Wn,-fma --Wn,-align --Wn,-finline-functions")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${BACKEND_COMPILER_FLAGS} -std=gnu99")
+endif()
 
 #--------------------------------------
 #       Configure Input/Output
@@ -45,6 +55,8 @@ set (debug "Debug mode enabled" OFF)
 if (debug)
 	message(STATUS "Debug mode enabled")
 	add_definitions ("-DDEBUG")
+else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused-result")
 endif()
 
 
