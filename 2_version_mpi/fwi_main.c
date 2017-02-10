@@ -31,51 +31,51 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     MPI_Comm_rank( MPI_COMM_WORLD, &rank);
     MPI_Comm_size( MPI_COMM_WORLD, &ranksize);
 
-		/* aux variables, just to make it more readable */
-		const int FIRSTRANK = 0;
-		const int LASTRANK  = ranksize -1;  
+    /* aux variables, just to make it more readable */
+    const int FIRSTRANK = 0;
+    const int LASTRANK  = ranksize -1;  
     
     /* local variables */
     int stacki;
     double start_t, end_t;
     real dt,dz,dx,dy;
     integer dimmz;
-		integer dimmx;
-		integer dimmy;
-		integer MaxYPlanesPerWorker;
-		integer forw_steps;
-		integer back_steps;
+    integer dimmx;
+    integer dimmy;
+    integer MaxYPlanesPerWorker;
+    integer forw_steps;
+    integer back_steps;
 
-		/* load shot parameters */
+    /* load shot parameters */
     load_shot_parameters( shotid, &stacki, &dt, &forw_steps, &back_steps, 
 				&dz, &dx, &dy,
 				&dimmz, &dimmx, &dimmy,
 				&MaxYPlanesPerWorker,
 				outputfolder, waveletFreq );
+    
+    /* Max number of y-planes per worker does not differenciate between HALO or
+     * maingrid planes! */
 
-		/* Max number of y-planes per worker does not differenciate between HALO or
-		 * maingrid planes! */
+    /* Compute the integration limits in order to load the correct slice from the input
+     * velocity model. These are not the limits for the wave propagator! (they are local,
+     * i.e. starts at zero!) */
+    const integer y0 = (rank == FIRSTRANK) ? 0     : (MaxYPlanesPerWorker * rank) - HALO;
+    const integer yf = (rank == LASTRANK ) ? dimmy : y0 + MaxYPlanesPerWorker;
 
-		/* Compute the integration limits in order to load the correct slice from the input
-		 * velocity model. These are not the limits for the wave propagator! (they are local,
-		 * i.e. starts at zero!) */
-		const integer y0 = (rank == FIRSTRANK) ? 0     : (MaxYPlanesPerWorker * rank) - HALO;
-		const integer yf = (rank == LASTRANK ) ? dimmy : y0 + MaxYPlanesPerWorker;
-
-		/*
-		 * Compute integration limits for the wave propagator. It assumes that the volume
-		 * is local, so the indices start at zero
-		 */
+    /*
+     * Compute integration limits for the wave propagator. It assumes that the volume
+     * is local, so the indices start at zero
+     */
     const integer edimmy = (yf - y0);
-		const integer nz0 = 0;
-		const integer nx0 = 0;
-		const integer ny0 = 0;
-		const integer nzf = dimmz;
-		const integer nxf = dimmx;
-		const integer nyf = edimmy;
+    const integer nz0 = 0;
+    const integer nx0 = 0;
+    const integer ny0 = 0;
+    const integer nzf = dimmz;
+    const integer nxf = dimmx;
+    const integer nyf = edimmy;
     const integer numberOfCells = dimmz * dimmx * edimmy;
 	
-		print_debug("number of cells in kernel() %d\n", numberOfCells);
+    print_debug("number of cells in kernel() %d\n", numberOfCells);
     print_debug("The length of local arrays is " I " cells", numberOfCells);
 
 
@@ -98,95 +98,95 @@ void kernel( propagator_t propagator, real waveletFreq, int shotid, char* output
     /* inspects every array positions for leaks. Enabled when DEBUG flag is defined */
     check_memory_shot  ( dimmz, dimmx, (nyf - ny0), &coeffs, &s, &v, rho);
 
-		/* Perform forward, backward or test propagations */
+    /* Perform forward, backward or test propagations */
     switch( propagator )
-    {
-    case( RTM_KERNEL ):
-    {
-        start_t = dtime();
-
-        propagate_shot ( FORWARD,
-                         v, s, coeffs, rho,
-                         forw_steps, back_steps -1,
-                         dt,dz,dx,dy,
-                         nz0, nzf, nx0, nxf, ny0, nyf,
-                         stacki,
-                         shotfolder,
-                         io_buffer,
-                         dimmz, dimmx, (nyf - ny0));
-
-        end_t = dtime();
-
-        print_stats("Forward propagation finished in %lf seconds", end_t - start_t );
-
-        start_t = dtime();
-        
-        propagate_shot ( BACKWARD,
-                         v, s, coeffs, rho,
-                         forw_steps, back_steps -1,
-                         dt,dz,dx,dy,
-                         nz0, nzf, nx0, nxf, ny0, nyf,
-                         stacki,
-                         shotfolder,
-                         io_buffer,
-                         dimmz, dimmx, (nyf - ny0));
-
-        end_t = dtime();
-
-        print_stats("Backward propagation finished in %lf seconds", end_t - start_t );
+    { 
+	case( RTM_KERNEL ): 
+        {
+	    start_t = dtime();
+    
+	    propagate_shot ( FORWARD,
+   			    v, s, coeffs, rho,
+   			    forw_steps, back_steps -1,
+   			    dt,dz,dx,dy,
+   			    nz0, nzf, nx0, nxf, ny0, nyf,
+   			    stacki,
+   			    shotfolder,
+   			    io_buffer,
+   			    dimmz, dimmx, (nyf - ny0));
+    
+	    end_t = dtime();
+    
+	    print_stats("Forward propagation finished in %lf seconds", end_t - start_t );
+    
+	    start_t = dtime();
+    
+	    propagate_shot ( BACKWARD,
+   			    v, s, coeffs, rho,
+   			    forw_steps, back_steps -1,
+   			    dt,dz,dx,dy,
+   			    nz0, nzf, nx0, nxf, ny0, nyf,
+   			    stacki,
+   			    shotfolder,
+   			    io_buffer,
+   			    dimmz, dimmx, (nyf - ny0));
+     
+	    end_t = dtime();
+    
+	    print_stats("Backward propagation finished in %lf seconds", end_t - start_t );
 
 #if defined(DO_NOT_PERFORM_IO)
-        print_info("Warning: we are not creating gradient nor preconditioner "
-                   "fields, because IO is not enabled for this execution" );
+    
+	    print_info("Warning: we are not creating gradient nor preconditioner "
+	        	    "fields, because IO is not enabled for this execution" );
 #else
-        if ( rank == 0 ) 
-        {
-            char fnameGradient[300];
-            char fnamePrecond[300];
-            sprintf( fnameGradient, "%s/gradient_%05d.dat", shotfolder, shotid );
-            sprintf( fnamePrecond , "%s/precond_%05d.dat" , shotfolder, shotid );
-
-            FILE* fgradient = safe_fopen( fnameGradient, "ab", __FILE__, __LINE__ );
-            FILE* fprecond  = safe_fopen( fnamePrecond , "ab", __FILE__, __LINE__ );
-
-            print_info("Storing local gradient field in %s", fnameGradient );
-            safe_fwrite( io_buffer, sizeof(real), numberOfCells * WRITTEN_FIELDS, fgradient, __FILE__, __LINE__ );
-
-            print_info("Storing local preconditioner field in %s", fnamePrecond);
-            safe_fwrite( io_buffer, sizeof(real), numberOfCells * WRITTEN_FIELDS, fprecond , __FILE__, __LINE__ );
-
-            safe_fclose( fnameGradient, fgradient, __FILE__, __LINE__ );
-            safe_fclose( fnamePrecond , fprecond , __FILE__, __LINE__ );
-        }
+    	    if ( rank == 0 ) 
+    	    {
+	       char fnameGradient[300];
+   	       char fnamePrecond[300];
+   	       sprintf( fnameGradient, "%s/gradient_%05d.dat", shotfolder, shotid );
+   	       sprintf( fnamePrecond , "%s/precond_%05d.dat" , shotfolder, shotid );
+   
+	       FILE* fgradient = safe_fopen( fnameGradient, "ab", __FILE__, __LINE__ );
+   	       FILE* fprecond  = safe_fopen( fnamePrecond , "ab", __FILE__, __LINE__ );
+   
+	       print_info("Storing local gradient field in %s", fnameGradient );
+   	       safe_fwrite( io_buffer, sizeof(real), numberOfCells * WRITTEN_FIELDS, fgradient, __FILE__, __LINE__ );
+   
+	       print_info("Storing local preconditioner field in %s", fnamePrecond);
+    	       safe_fwrite( io_buffer, sizeof(real), numberOfCells * WRITTEN_FIELDS, fprecond , __FILE__, __LINE__ );
+    
+	       safe_fclose( fnameGradient, fgradient, __FILE__, __LINE__ );
+    	       safe_fclose( fnamePrecond , fprecond , __FILE__, __LINE__ );
+    	    }
 #endif
-
-        break;
-    }
-    case( FM_KERNEL  ):
-    {
-        start_t = dtime();
-
-        propagate_shot ( FWMODEL,
-                         v, s, coeffs, rho,
-                         forw_steps, back_steps -1,
-                         dt,dz,dx,dy,
-                         nz0, nzf, nx0, nxf, ny0, nyf,
-                         stacki,
-                         shotfolder,
-                         io_buffer,
-                         dimmz, dimmx, (nyf - ny0) );
-
-        end_t = dtime();
-
-        print_stats("Forward Modelling finished in %lf seconds", end_t - start_t );
-       
-        break;
-    }
-    default:
-    {
-        print_error("Invalid propagation identifier");
-        abort();
-    }
+    	    break;
+    	}
+    	case( FM_KERNEL  ):
+    	{
+	    start_t = dtime();
+    
+	    propagate_shot ( FWMODEL,
+   			    v, s, coeffs, rho,
+   			    forw_steps, back_steps -1,
+   			    dt,dz,dx,dy,
+   			    nz0, nzf, nx0, nxf, ny0, nyf,
+   			    stacki,
+   			    shotfolder,
+   			    io_buffer,
+   			    dimmz, dimmx, (nyf - ny0) );
+    
+	    end_t = dtime();
+    
+	    print_stats("Forward Modelling finished in %lf seconds", end_t - start_t );
+     
+	    break;
+    	}
+    	default:
+     	{
+            print_error("Invalid propagation identifier");
+    	    abort();
+    	}
     } /* end case */
 
     // liberamos la memoria alocatada en el shot
@@ -199,30 +199,34 @@ int main(int argc, char* argv[])
     double tstart, tend;
     tstart = dtime();
 		
-		/* Initialize MPI environment */
+    /* Initialize MPI environment */
     MPI_Init ( &argc, &argv );
     int mpi_rank, subdomains;
     MPI_Comm_size( MPI_COMM_WORLD, &subdomains);
     MPI_Comm_rank( MPI_COMM_WORLD, &mpi_rank);
 
-		/* load parameters from schedule file */
-		schedule_t S = load_schedule(argv[1]);
+    /* load parameters from schedule file */
+    schedule_t S = load_schedule(argv[1]);
 
     for(int i=0; i<S.nfreqs; i++)
     {
         /* Process one frequency at a time */
         real waveletFreq = S.freq[i];
-				integer stacki   = S.stacki[i];
-				real dt          = S.dt[i];
-				integer forw_steps = S.forws[i];
-				integer back_steps = S.backs[i];
-        real dx = S.dx[i];
+	integer stacki   = S.stacki[i];
+	real dt          = S.dt[i];
+
+	integer forw_steps = S.forws[i];
+	integer back_steps = S.backs[i];
+
+	real dx = S.dx[i];
         real dy = S.dy[i];
         real dz = S.dz[i];
-				integer dimmz = S.dimmz[i];
-				integer dimmx = S.dimmx[i];
-				integer dimmy = S.dimmy[i];
-				integer MaxYPlanesPerWorker   = S.ppd[i];
+
+	integer dimmz = S.dimmz[i];
+	integer dimmx = S.dimmx[i];
+	integer dimmy = S.dimmy[i];
+
+	integer MaxYPlanesPerWorker   = S.ppd[i];
 
         print_info("\n------ Computing %d-th frequency (%.2fHz).  -----\n", i, waveletFreq); 
 
@@ -248,7 +252,7 @@ int main(int argc, char* argv[])
                     store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps,
                                            &dz, &dx, &dy, 
                                            &dimmz, &dimmx, &dimmy, 
-																					 &MaxYPlanesPerWorker,
+					   &MaxYPlanesPerWorker,
                                            S.outputfolder, waveletFreq );
                 }
 
@@ -260,11 +264,11 @@ int main(int argc, char* argv[])
                 //update_shot()
             }
 
-            MPI_Barrier( MPI_COMM_WORLD );
-           
-						// gather_shots();
+           MPI_Barrier( MPI_COMM_WORLD );
 
-						for(int test=0; test<S.ntests; test++)
+	   // gather_shots();
+	   
+	   for(int test=0; test<S.ntests; test++)
             {
                 print_info("\tProcessing %d-th test iteration", test);
                 
@@ -281,7 +285,7 @@ int main(int argc, char* argv[])
                         store_shot_parameters( shot, &stacki, &dt, &forw_steps, &back_steps, 
                                                &dz, &dx, &dy, 
                                                &dimmz, &dimmx, &dimmy,
-																							 &MaxYPlanesPerWorker,
+					       &MaxYPlanesPerWorker,
                                                S.outputfolder, waveletFreq );
                     }
 
