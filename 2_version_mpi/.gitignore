@@ -6,6 +6,8 @@
 *.vim
 *.out
 *.err
+.*.un~
+*~
 run*
 cscope.*
 Results/*

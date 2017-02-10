@@ -667,12 +667,12 @@ void propagate_shot(time_d        direction,
         /* Boundary exchange for velocity values */
         exchange_velocity_boundaries( v, dimmz * dimmx, rank, ranksize, nyf, ny0);
         
-				tvel_total += (dtime() - tvel_start);
+	tvel_total += (dtime() - tvel_start);
         /* ------------------------------------------------------------------------------ */
         /*                        STRESS COMPUTATION                                      */
         /* ------------------------------------------------------------------------------ */
         /* Phase 1. Computation of the left-most planes of the domain */
-				stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
+	stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
                           nz0 +   HALO,
                           nzf -   HALO,
                           nx0 +   HALO,
@@ -682,7 +682,7 @@ void propagate_shot(time_d        direction,
                           dimmz, dimmx );
 
         /* Phase 1. Computation of the right-most planes of the domain */
-				stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
+	stress_propagator(s, v, coeffs, rho, dt, dzi, dxi, dyi, 
                           nz0 +   HALO,
                           nzf -   HALO,
                           nx0 +   HALO,
@@ -705,7 +705,7 @@ void propagate_shot(time_d        direction,
                           nyf -   HALO,
                           dimmz, dimmx );
         
-				tstress_total += (dtime() - tstress_start);
+	tstress_total += (dtime() - tstress_start);
         tglobal_total += (dtime() - tglobal_start);
 
         /* perform IO */
@@ -780,7 +780,7 @@ void exchange_velocity_boundaries ( v_t v,
         EXCHANGE( &v.br.w[right_send], &v.br.w[right_recv], rank+1, rank, nelems, __FILE__, __LINE__ );
     }
 
-		print_debug("Velocity boundaries exchanged correctly");
+        print_debug("Velocity boundaries exchanged correctly");
 };
 
 void exchange_stress_boundaries ( s_t s, 
@@ -863,19 +863,19 @@ void exchange_stress_boundaries ( s_t s,
         EXCHANGE( &s.br.yy[right_send], &s.br.yy[right_recv], rank+1, rank, nelems, __FILE__, __LINE__ );
     }
 
-		print_debug("Stress boundaries exchanged correctly");
+	print_debug("Stress boundaries exchanged correctly");
 };
 
 void EXCHANGE (const real*   sendbuf, 
-                          real*   recvbuf, 
-                    const integer dst, 
-                    const integer src, 
-                    const integer message_size,
-                    const char*   file,
-                    const integer line)
+                     real*   recvbuf, 
+               const integer dst, 
+               const integer src, 
+               const integer message_size,
+               const char*   file,
+               const integer line)
 {	
 #if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
- 	 int err;
+   int err;
    int tag = 100;
    
    print_debug( "         [BEFORE]MPI sendrecv [count:%d][dst:%d][src:%d] %s : %d", 
