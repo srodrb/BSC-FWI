@@ -49,33 +49,6 @@ integer IDX (const integer z,
              const integer dimmz, 
              const integer dimmx);
 
-real_stencil_sponge_Z(const offset_t off,
-		      const real* restrict ptr, 
-		      const real dzi,
-		      const integer z,
-		      const integer x, 
-		      const integer y,
-		      const integer dimmz, 
-		      const integer dimmx);
-
-real stencil_sponge_X(const offset_t off,
-                      const real* restrict ptr,
-      		      const real dxi,
-      		      const integer z,
-      		      const integer x,
-      		      const integer y,
-      		      const integer dimmz,
-      		      const integer dimmx);
-
-real stencil_sponge_Y(const offset_t off,
-                      const real* restrict ptr,      
-		      const real dyi,
-       		      const integer z,
-       		      const integer x,
-       		      const integer y,
-       		      const integer dimmz,
-		      const integer dimmx);
-	
 real stencil_Z(const offset_t off,
                const real* restrict ptr,
                const real    dzi,

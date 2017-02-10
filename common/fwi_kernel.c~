@@ -476,7 +476,7 @@ void write_snapshot(char *folder,
 		/* open snapshot file and write results */
     sprintf(fname,"%s/snapshot.%03d.%05d", folder, rank, suffix);
 		
-    print_debug("[Rank %d] is writting snapshot on %s", rank, fname);
+		print_debug("[Rank %d] is writting snapshot on %s", rank, fname);
 
     tstart_outer = dtime();
     FILE *snapshot = safe_fopen(fname,"wb", __FILE__, __LINE__ );
@@ -523,8 +523,8 @@ void read_snapshot(char *folder,
                    int suffix,
                    v_t *v,
                    const integer dimmz,
-                   const integer dimmx,
-		   const integer dimmy)
+									 const integer dimmx,
+									 const integer dimmy)
 {
 #if defined(DO_NOT_PERFORM_IO)
     print_debug("We are not reading the snapshot here cause IO is not enabled!");
@@ -533,20 +533,20 @@ void read_snapshot(char *folder,
     double tstart_outer, tstart_inner;
     double iospeed_outer, iospeed_inner;
     double tend_outer, tend_inner;
-    const integer cellsInVolume = 1; // dimmz * dimmx * dimmy;
+		const integer cellsInVolume = 1; // dimmz * dimmx * dimmy;
     char fname[300];
-    int  rank = 0;
+		int  rank = 0;
 
 #if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
     MPI_Comm_rank( MPI_COMM_WORLD, &rank);
 #endif
     
-    /* open snapshot file and read results */
+		/* open snapshot file and read results */
     sprintf(fname,"%s/snapshot.%03d.%05d", folder, rank, suffix);
 
-    print_debug("[Rank %d] is freading snapshot from %s", rank, fname);
+		print_debug("[Rank %d] is freading snapshot from %s", rank, fname);
     
-    tstart_outer = dtime();
+		tstart_outer = dtime();
     FILE *snapshot = safe_fopen(fname,"rb", __FILE__, __LINE__ );
 
     tstart_inner = dtime();
@@ -612,17 +612,18 @@ void propagate_shot(time_d        direction,
     double tvel_start, tvel_total = 0.0;
     double megacells = 0.0;
 
-    int rank=0, ranksize=1;
+		int rank=0, ranksize=1;
 
-    #if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank);
-    MPI_Comm_size( MPI_COMM_WORLD, &ranksize);
-    #endif
+		#if defined(DISTRIBUTED_MEMORY_IMPLEMENTATION)
+    	MPI_Comm_rank( MPI_COMM_WORLD, &rank);
+    	MPI_Comm_size( MPI_COMM_WORLD, &ranksize);
+		#endif
 
-    for(int t=0; t < timesteps; t++)
+
+		for(int t=0; t < timesteps; t++)
     {
-         /* print out some information */
-         print_info("[Rank %d]  Computing %d-th timestep", rank, t);
+				/* print out some information */
+        print_info("[Rank %d]  Computing %d-th timestep", rank, t);
 
         /* perform IO */
         if ( t%stacki == 0 && direction == BACKWARD) read_snapshot(folder, ntbwd-t, &v, dimmz, dimmx, dimmy);
