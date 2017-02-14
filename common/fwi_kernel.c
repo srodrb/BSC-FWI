@@ -653,8 +653,11 @@ void propagate_shot(time_d        direction,
                             nyf - 2*HALO,
                             nyf -   HALO,
                             dimmz, dimmx );
+ 
+        /* Boundary exchange for velocity values */
+        exchange_velocity_boundaries( v, dimmz * dimmx, rank, ranksize, nyf, ny0);
    
-        /* Phase 2. Computation of the central planes. */
+        /* Phase2. Computation of the central planes. */
         tvel_start = dtime();
 
         velocity_propagator(v, s, coeffs, rho, dt, dzi, dxi, dyi,
@@ -665,11 +668,10 @@ void propagate_shot(time_d        direction,
                             ny0 +   HALO,
                             nyf -   HALO,
                             dimmz, dimmx );
+	
+	tvel_total += (dtime() - tvel_start);
 
-        /* Boundary exchange for velocity values */
-        exchange_velocity_boundaries( v, dimmz * dimmx, rank, ranksize, nyf, ny0);
-        
-				tvel_total += (dtime() - tvel_start);
+       
         /* ------------------------------------------------------------------------------ */
         /*                        STRESS COMPUTATION                                      */
         /* ------------------------------------------------------------------------------ */
@@ -707,7 +709,7 @@ void propagate_shot(time_d        direction,
                           nyf -   HALO,
                           dimmz, dimmx );
         
-				tstress_total += (dtime() - tstress_start);
+	tstress_total += (dtime() - tstress_start);
         tglobal_total += (dtime() - tglobal_start);
 
         /* perform IO */

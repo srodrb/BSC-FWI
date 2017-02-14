@@ -4,7 +4,7 @@
 OPTION_DEBUG_VALUE=OFF
 OPTION_IO_VALUE=ON
 OPTION_NMVE_VALUE=OFF
-OPTION_STATS_VALUE=OFF
+OPTION_STATS_VALUE=ON
 
 # env. variables required by the FWI code
 export FWIDIR=$PWD
@@ -40,7 +40,7 @@ source environment_$2.sh
 mkdir -p build
 cd build
 rm -rf *
-cmake -Darchitecture=generic -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE -Dcollect-stats=OPTION_STATS_VALUE ..
+cmake -Darchitecture=KNL -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE -Dcollect-stats=OPTION_STATS_VALUE ..
 make install
 
 # script ends here
