@@ -8,7 +8,7 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-xHost -qopenmp -std=c99 -restrict -align -finline-functions -fma -prec-div -prec-sqrt -fp-model=precise")
+	set (CMAKE_C_FLAGS "-xHost -std=c99 -qopenmp -restrict -align -finline-functions -fma -prec-div -prec-sqrt -fp-model=precise")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	# set (CMAKE_C_FLAGS "-xMIC-AVX512 -qopt-streaming-stores=never")

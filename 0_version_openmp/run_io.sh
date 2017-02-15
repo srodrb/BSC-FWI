@@ -5,5 +5,5 @@ export KMP_AFFINITY=verbose,compact
 # export KMP_AFFINITY=granularity=fine,compact,verbose
 rm fwi.log
 # gdb --args ./fwi.bin fwi_schedule.txt
-taskset -c 0-15 ./fwi.bin fwi_schedule.test
+numactl --membind=0,1 taskset -c 0-15 ./fwi.bin fwi_schedule.test
 # ./fwi.bin fwi_schedule.test

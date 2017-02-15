@@ -25,6 +25,7 @@ void set_array_to_random_real( real* restrict array, const integer length)
 {
     const real randvalue = rand() / (1.0 * RAND_MAX);
 
+#pragma omp parallel for
     for( integer i = 0; i < length; i++ )
         array[i] = randvalue;
 }
@@ -34,6 +35,7 @@ void set_array_to_random_real( real* restrict array, const integer length)
  */
 void set_array_to_constant( real* restrict array, const real value, const integer length)
 {
+#pragma omp parallel for
     for( integer i = 0; i < length; i++ )
         array[i] = value;
 }
@@ -621,10 +623,10 @@ void propagate_shot(time_d        direction,
 		#endif
 
 
-		for(int t=0; t < timesteps; t++)
+	for(int t=0; t < timesteps; t++)
     {
 				/* print out some information */
-        print_info("[Rank %d]  Computing %d-th timestep", rank, t);
+        // print_info("[Rank %d]  Computing %d-th timestep", rank, t);
 
         /* perform IO */
         if ( t%stacki == 0 && direction == BACKWARD) read_snapshot(folder, ntbwd-t, &v, dimmz, dimmx, dimmy);
