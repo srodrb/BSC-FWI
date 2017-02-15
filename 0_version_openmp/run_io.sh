@@ -1,6 +1,9 @@
 #!/usr/bin
+export FWIDIR=$PWD/..
+export OMP_NUM_THREADS=16
+export KMP_AFFINITY=verbose,compact
+# export KMP_AFFINITY=granularity=fine,compact,verbose
 rm fwi.log
-../utils/generateSchedule.bin fwi_params.txt.mpi_local fwi_frequencies.txt
-../utils/generateModel.bin fwi_schedule.txt
 # gdb --args ./fwi.bin fwi_schedule.txt
-./fwi.bin fwi_schedule.txt
+taskset -c 0-15 ./fwi.bin fwi_schedule.test
+# ./fwi.bin fwi_schedule.test

@@ -136,7 +136,7 @@ void compute_component_vcell_TL (      real* restrict vptr,
     const real* restrict _sxptr __attribute__ ((aligned (64))) = sxptr;
     const real* restrict _syptr __attribute__ ((aligned (64))) = syptr;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for(integer y=ny0; y < nyf; y++)
     {
         for(integer x=nx0; x < nxf; x++)
@@ -189,7 +189,7 @@ void compute_component_vcell_TR (      real* restrict vptr,
     const real* restrict _sxptr __attribute__ ((aligned (64))) = sxptr;
     const real* restrict _syptr __attribute__ ((aligned (64))) = syptr;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for(integer y=ny0; y < nyf; y++)
     {
         for(integer x=nx0; x < nxf; x++)
@@ -242,7 +242,7 @@ void compute_component_vcell_BR (      real* restrict  vptr,
     const real* restrict _sxptr __attribute__ ((aligned (64))) = sxptr;
     const real* restrict _syptr __attribute__ ((aligned (64))) = syptr;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for(integer y=ny0; y < nyf; y++)
     {
         for(integer x=nx0; x < nxf; x++)
@@ -296,7 +296,7 @@ void compute_component_vcell_BL (      real* restrict  vptr,
     const real* restrict _syptr __attribute__ ((aligned (64))) = syptr;
 
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for(integer y=ny0; y < nyf; y++)
     {
         for(integer x=nx0; x < nxf; x++)
@@ -568,7 +568,7 @@ void compute_component_scell_TR (s_t             s,
     const real* restrict vzv    __attribute__ ((aligned (64))) = vnode_z.v;
     const real* restrict vzw    __attribute__ ((aligned (64))) = vnode_z.w;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for (integer y = ny0; y < nyf; y++)
     {
         for (integer x = nx0; x < nxf; x++)
@@ -666,7 +666,7 @@ void compute_component_scell_TL (s_t             s,
     const real* restrict vzv    __attribute__ ((aligned (64))) = vnode_z.v;
     const real* restrict vzw    __attribute__ ((aligned (64))) = vnode_z.w;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for (integer y = ny0; y < nyf; y++)
     {
         for (integer x = nx0; x < nxf; x++)
@@ -765,7 +765,7 @@ void compute_component_scell_BR (s_t             s,
     const real* restrict vzv    __attribute__ ((aligned (64))) = vnode_z.v;
     const real* restrict vzw    __attribute__ ((aligned (64))) = vnode_z.w;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for (integer y = ny0; y < nyf; y++)
     {
         for (integer x = nx0; x < nxf; x++)
@@ -864,7 +864,7 @@ void compute_component_scell_BL (s_t             s,
     const real* restrict vzv    __attribute__ ((aligned (64))) = vnode_z.v;
     const real* restrict vzw    __attribute__ ((aligned (64))) = vnode_z.w;
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for
     for (integer y = ny0; y < nyf; y++)
     {
         for (integer x = nx0; x < nxf; x++)

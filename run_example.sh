@@ -2,9 +2,10 @@
 #.........................................
 # define configuration
 OPTION_DEBUG_VALUE=OFF
-OPTION_IO_VALUE=ON
+OPTION_IO_VALUE=OFF
 OPTION_NMVE_VALUE=OFF
 OPTION_STATS_VALUE=ON
+OPTION_ARCH_VALUE=generic
 
 # env. variables required by the FWI code
 export FWIDIR=$PWD
@@ -21,7 +22,7 @@ source environment_$2.sh
 mkdir -p build
 cd build
 rm -rf *
-cmake -DCMAKE_C_COMPILER=gcc -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE ..
+cmake -DCMAKE_C_COMPILER=gcc -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE ..
 make install
 
 # create the schedule and model by running the binaries
@@ -29,6 +30,7 @@ cd ..
 echo "${color_green}------------- Running scheduler and model generator utilities${color_reset}"
 
 echo "${color_cyan}"
+rm fwi.log
 ./generateSchedule.bin fwi_params.txt fwi_frequencies.txt
 echo "${color_reset}"
 ./generateModel.bin fwi_schedule.txt
@@ -40,7 +42,8 @@ source environment_$2.sh
 mkdir -p build
 cd build
 rm -rf *
-cmake -Darchitecture=KNL -Ddebug=OPTION_DEBUG_VALUE -Dperform-io=OPTION_IO_VALUE -Duse-nmve=OPTION_NMVE_VALUE -Dcollect-stats=OPTION_STATS_VALUE ..
+echo "cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE -Dcollect-stats=$OPTION_STATS_VALUE .."
+cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE -Dcollect-stats=$OPTION_STATS_VALUE ..
 make install
 
 # script ends here

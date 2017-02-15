@@ -8,13 +8,14 @@ project(FWI C)
 # Configure high-level compiler flags
 #--------------------------------------
 set (architecture "generic" CACHE STRING "Architecture descriptor")
+message(STATUS "Architecture is set to ${architecture}")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-O3 --Wn,-xHost")
+	set (CMAKE_C_FLAGS "--ompss -O3 -xC --Wn,-xHost --Wn,-fma --Wn,-align --Wn,-restrict")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
-	set (CMAKE_C_FLAGS "-O3 --Wn,-xMIC-AVX512 --Wn,-qopt-streaming-stores=never")
+	set (CMAKE_C_FLAGS "--ompss -O3 -xC --Wn,-xMIC-AVX512 --Wn,-qopt-streaming-stores=never --Wn,-fma --Wn,-restrict --Wn,prec-div --Wn,-prec-sqrt")
 else()
 	message (FATAL_ERROR "Architecture descriptor is needed!")
 endif()
@@ -23,24 +24,29 @@ endif()
 #   Common compilation flags, if any.
 #--------------------------------------
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --Wn,-fma --Wn,-align --Wn,-finline-functions")
+	message(STATUS "Compiler ID is ${CMAKE_C_COMPILER_ID}")
+	# set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --Wn,-fma --Wn,-align --Wn,-restrict")
 else()
-	set (CMAKE_C_FLAGS "-O3 -g -std=gnu99")
+	# set (CMAKE_C_FLAGS "-O3 -g -std=gnu99")
 endif()
 
-add_definitions ("-DSHARED_MEMORY_IMPLEMENTATION")
+#--------------------------------------
+#   OmpSs flags
+#--------------------------------------
+add_definitions ("-DSHARED_MEMORY_IMPLEMENTATION -DUSE_OMPSS")
 
 #--------------------------------------
 #   Configure release
 #--------------------------------------
-set (debug "Debug mode enabled" OFF)
+option (debug "Debug mode enabled" OFF)
 
-# if (debug)
-# 	message(STATUS "Debug mode enabled")
-# 	add_definitions ("-DDEBUG")
-# else()
-# 	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
-# endif()
+if (debug)
+	message(STATUS "Debug mode enabled")
+	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
+	add_definitions ("-DDEBUG")
+else()
+	message(STATUS "Debug mode disabled")
+endif()
 
 #--------------------------------------
 #       Configure Input/Output
@@ -57,13 +63,14 @@ endif()
 #--------------------------------------
 #       Configure statistics gathering
 #--------------------------------------
-option (collect-stats "Collect performance statistics" OFF)
+option (collect-stats "Collect performance statistics" ON)
 
 if (collect-stats AND perform-io)
 	message(STATUS "Kernel will collect performance statistics")
 	add_definitions("-DCOLLECT_STATS")
 elseif (collect-stats AND NOT perform-io)
-	message(WARNING "Kernel cant collect performance statistics, perform-io flag is disabled")
+	message(WARNING "Kernel cant collect all performance statistics, perform-io flag is disabled")
+	add_definitions("-DCOLLECT_STATS")
 endif()
 
 #--------------------------------------

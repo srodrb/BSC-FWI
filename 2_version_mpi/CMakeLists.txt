@@ -48,13 +48,14 @@ endif()
 #--------------------------------------
 #   Configure release
 #--------------------------------------
-set (debug "Debug mode enabled" OFF)
+option (debug "Debug mode enabled" OFF)
 
 if (debug)
 	message(STATUS "Debug mode enabled")
+	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
 	add_definitions ("-DDEBUG")
 else()
-	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
+	message(STATUS "Debug mode disabled")
 endif()
 
 
@@ -79,7 +80,8 @@ if (collect-stats AND perform-io)
 	message(STATUS "Kernel will collect performance statistics")
 	add_definitions("-DCOLLECT_STATS")
 elseif (collect-stats AND NOT perform-io)
-	message(WARNING "Kernel cant collect performance statistics, perform-io flag is disabled")
+	message(WARNING "Kernel cant collect all performance statistics, perform-io flag is disabled")
+	add_definitions("-DCOLLECT_STATS")
 endif()
 
 

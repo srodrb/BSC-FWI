@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 2.8.8)
-
 project(FWI C)
-
-# set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${})
 
 #--------------------------------------
 # Configure high-level compiler flags
@@ -11,11 +8,11 @@ set (architecture "generic" CACHE STRING "Architecture descriptor")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
-	set (CMAKE_C_FLAGS "-xHost")
+	set (CMAKE_C_FLAGS "-xHost -qopenmp -std=c99 -restrict -align -finline-functions -fma -prec-div -prec-sqrt -fp-model=precise")
 elseif ("${architecture}" STREQUAL "KNL")
 	add_definitions ("-DKNL")
 	# set (CMAKE_C_FLAGS "-xMIC-AVX512 -qopt-streaming-stores=never")
-	set (CMAKE_C_FLAGS "-O3 --Wn,-xMIC-AVX512 --Wn,-qopt-streaming-stores=never")
+	set (CMAKE_C_FLAGS "-O3 --Wn,-xMIC-AVX512 --Wn,-qopt-streaming-stores=never -qopt-assume-safe-padding")
 else()
 	message (FATAL_ERROR "Architecture descriptor is needed!")
 endif()
@@ -23,26 +20,26 @@ endif()
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
-	# set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -qopenmp -fma -align -finline-functions")
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --Wn,-std=c99 --Wn,-fma --Wn,-align --Wn,-finline-functions")
-else()
-	set (CMAKE_C_FLAGS "-O3 -g -std=gnu99 -fopenmp")
-endif()
+# if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+# 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -qopenmp -fma -align -finline-functions")
+# else()
+# 	set (CMAKE_C_FLAGS "-O3 -g -std=gnu99 -fopenmp")
+# endif()
 
 add_definitions ("-DSHARED_MEMORY_IMPLEMENTATION")
 
 #--------------------------------------
 #   Configure release
 #--------------------------------------
-set (debug "Debug mode enabled" OFF)
+option (debug "Debug mode enabled" OFF)
 
-# if (debug)
-# 	message(STATUS "Debug mode enabled")
-# 	add_definitions ("-DDEBUG")
-# else()
-# 	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
-# endif()
+if (debug)
+	message(STATUS "Debug mode enabled")
+	set (CMAKE_C_FLAGS "-O0 -Wunused-result")
+	add_definitions ("-DDEBUG")
+else()
+	message(STATUS "Debug mode disabled")
+endif()
 
 #--------------------------------------
 #       Configure Input/Output
@@ -65,7 +62,8 @@ if (collect-stats AND perform-io)
 	message(STATUS "Kernel will collect performance statistics")
 	add_definitions("-DCOLLECT_STATS")
 elseif (collect-stats AND NOT perform-io)
-	message(WARNING "Kernel cant collect performance statistics, perform-io flag is disabled")
+	message(WARNING "Kernel cant collect all performance statistics, perform-io flag is disabled")
+	add_definitions("-DCOLLECT_STATS")
 endif()
 
 #--------------------------------------
