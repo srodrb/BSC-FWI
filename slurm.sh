@@ -7,10 +7,9 @@
 #SBATCH -o job.knl.out
 #SBATCH --ntasks=1 
 #SBATCH -N 1
-#SBATCH --cpus-per-task=68
 #SBATCH --exclusive
-#SBATCH --constraint=no_turbo
-#SBATCH --constraint=performance
+#SBATCH --nodelist=knl04
+#SBATCH --constraint=cache
 
 sleep 1h
 

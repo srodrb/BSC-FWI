@@ -325,19 +325,36 @@ void* __malloc( size_t alignment, const integer size)
 {
     void *buffer;
     int error;
-    
+   
+#if defined(__INTEL_COMPILER)
+    buffer = (void*) _mm_malloc( size, alignment );
+
+	if ( buffer == NULL )
+	{
+        print_error("Cant allocate buffer correctly");
+        abort();
+	}	
+
+
+#else 
     if( (error=posix_memalign( &buffer, alignment, size)) != 0)
     {
         print_error("Cant allocate buffer correctly");
         abort();
     }
-    
+#endif
+
+
     return (buffer);
 };
 
 void __free ( void* ptr)
 {
+#if defined(__INTEL_COMPILER)
+	_mm_free(ptr);
+#else
     free( ptr );
+#endif
 };
 
 /*
