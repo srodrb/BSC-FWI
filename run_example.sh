@@ -5,7 +5,7 @@ OPTION_DEBUG_VALUE=OFF
 OPTION_IO_VALUE=OFF
 OPTION_NMVE_VALUE=OFF
 OPTION_STATS_VALUE=ON
-OPTION_ARCH_VALUE=KNL
+OPTION_ARCH_VALUE=general # values are: generic,KNL
 
 # env. variables required by the FWI code
 export FWIDIR=$PWD

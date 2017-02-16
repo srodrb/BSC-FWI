@@ -36,6 +36,9 @@ else()
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${BACKEND_COMPILER_FLAGS} -std=gnu99")
 endif()
 
+message(STATUS "Compiler CFLAGS are: ${CMAKE_C_FLAGS}")
+
+
 #--------------------------------------
 #       Configure Input/Output
 #--------------------------------------
@@ -104,4 +107,5 @@ add_executable(fwi.intel64
 	"./fwi_propagator.c"
  	"./fwi_main.c")
 
+target_link_libraries(fwi.intel64 "-lm")
 install (TARGETS fwi.intel64 DESTINATION "${CMAKE_SOURCE_DIR}/")
