@@ -7,6 +7,7 @@ project(FWI C)
 # Configure high-level compiler flags
 #--------------------------------------
 set (architecture "generic" CACHE STRING "Architecture descriptor")
+message(STATUS "Architecture is set to ${architecture}")
 
 if ("${architecture}" STREQUAL "generic")
 	add_definitions ("-DGENERIC")
