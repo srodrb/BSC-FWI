@@ -3,7 +3,7 @@
 # define configuration
 OPTION_DEBUG_VALUE=OFF
 OPTION_IO_VALUE=OFF
-OPTION_NMVE_VALUE=OFF
+OPTION_NVME_VALUE=ON
 OPTION_STATS_VALUE=ON
 OPTION_ARCH_VALUE=generic  # values are: generic,KNL
 
@@ -22,7 +22,7 @@ source environment_$2.sh
 mkdir -p build
 cd build
 rm -rf *
-cmake -DCMAKE_C_COMPILER=gcc -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE ..
+cmake -DCMAKE_C_COMPILER=gcc -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nvme=$OPTION_NVME_VALUE ..
 make install
 
 # create the schedule and model by running the binaries
@@ -42,8 +42,8 @@ source environment_$2.sh
 mkdir -p build
 cd build
 rm -rf *
-echo "cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE -Dcollect-stats=$OPTION_STATS_VALUE .."
-cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nmve=$OPTION_NMVE_VALUE -Dcollect-stats=$OPTION_STATS_VALUE ..
+echo "cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nvme=$OPTION_NVME_VALUE -Dcollect-stats=$OPTION_STATS_VALUE .."
+cmake -Darchitecture=$OPTION_ARCH_VALUE -Ddebug=$OPTION_DEBUG_VALUE -Dperform-io=$OPTION_IO_VALUE -Duse-nvme=$OPTION_NVME_VALUE -Dcollect-stats=$OPTION_STATS_VALUE ..
 make install
 
 # script ends here

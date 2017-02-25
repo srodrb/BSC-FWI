@@ -51,6 +51,20 @@ else()
 	message(STATUS "Input/Output is disabled.")
 	add_definitions("-DDO_NOT_PERFORM_IO")
 endif()
+
+#--------------------------------------
+#        Use NMVe local storage
+#--------------------------------------
+option (use-nmve "Use NVMe devices for local I/O" OFF)
+
+if (use-nmve)
+	add_definitions("-DUSE_NVME")
+	message(STATUS "NMVe devices will be used for local I/O")
+else()
+	message(STATUS "Default file system will be used for local I/O")
+endif()
+
+
 #--------------------------------------
 #   Configure release
 #--------------------------------------

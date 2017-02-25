@@ -88,13 +88,13 @@ endif()
 #--------------------------------------
 #        Use NMVe local storage
 #--------------------------------------
-option (use-nmve "Use NMVe devices for local I/O" OFF)
+option (use-nvme "Use NVMe devices for local I/O" OFF)
 
-if (use-nmve)
-	add_definitions("-DUSE_NMVE")
+if (use-nvme)
+	add_definitions("-DUSE_NVME")
 	message(STATUS "NMVe devices will be used for local I/O")
 else()
-	message(STATUS "GPFS system will be used for local I/O")
+	message(STATUS "Default global file system will be used for local I/O")
 endif()
 
 #--------------------------------------

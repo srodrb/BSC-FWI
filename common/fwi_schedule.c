@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
 	real *frequencies;
 	size_t device_mem;
 	char outputfolder[1024];
+	char originalfolder[1024];
 
 	/*
 	 * Modify input parameters according to FWIDIR value
@@ -96,7 +97,12 @@ int main(int argc, char *argv[])
 												&ntests,
 												&slavemem, 
 												&workermem,
-												outputfolder);
+												originalfolder);
+#if defined(USE_NVME)
+		printf( "Outputfolder as loaded: %s\n", outputfolder);
+		CHECK(sprintf( outputfolder, "/nmve/tmp/%s", originalfolder));
+		printf("Using NMVe local storage: %s\n", outputfolder);
+#endif
 
 	load_freqlist( freqsfile, &nfreqs, &frequencies );
 
