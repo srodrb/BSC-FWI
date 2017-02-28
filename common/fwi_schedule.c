@@ -98,10 +98,15 @@ int main(int argc, char *argv[])
 												&slavemem, 
 												&workermem,
 												originalfolder);
+
+	printf("Path provided in fwi_params.txt is %s", originalfolder);
+
 #if defined(USE_NVME)
-		printf( "Outputfolder as loaded: %s\n", outputfolder);
 		CHECK(sprintf( outputfolder, "/nmve/tmp/%s", originalfolder));
 		printf("Using NMVe local storage: %s\n", outputfolder);
+#else
+		CHECK(sprintf(outputfolder, "%s", originalfolder));
+		printf("Using default global parallel file system: %s\n", outputfolder);
 #endif
 
 	load_freqlist( freqsfile, &nfreqs, &frequencies );

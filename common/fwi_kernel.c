@@ -468,7 +468,7 @@ void write_snapshot(char *folder,
     double tstart_outer, tstart_inner;
     double iospeed_outer, iospeed_inner;
     double tend_outer, tend_inner;
-		const  integer cellsInVolume = 1; // dimmz * dimmx * dimmy;
+		const  integer cellsInVolume = dimmz * dimmx * dimmy;
     char fname[300];
     int  rank = 0;
 
@@ -516,6 +516,7 @@ void write_snapshot(char *folder,
     print_stats("\tInner time %lf seconds (%lf MB/s)", (tend_inner - tstart_inner), iospeed_inner);
     print_stats("\tOuter time %lf seconds (%lf MB/s)", (tend_outer - tstart_outer), iospeed_outer);
     print_stats("\tDifference %lf seconds", tend_outer - tend_inner);
+
 #endif
 };
 
@@ -536,7 +537,7 @@ void read_snapshot(char *folder,
     double tstart_outer, tstart_inner;
     double iospeed_outer, iospeed_inner;
     double tend_outer, tend_inner;
-		const integer cellsInVolume = 1; // dimmz * dimmx * dimmy;
+		const integer cellsInVolume = dimmz * dimmx * dimmy;
     char fname[300];
 		int  rank = 0;
 

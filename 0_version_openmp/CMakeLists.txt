@@ -17,6 +17,8 @@ else()
 	message (FATAL_ERROR "Architecture descriptor is needed!")
 endif()
 
+message(STATUS "CMAKE_C_FLAGS are ${CMAKE_C_FLAGS}")
+
 #--------------------------------------
 #   Common compilation flags, if any.
 #--------------------------------------
