@@ -1,11 +1,12 @@
 #!/bin/bash
 #PBS -l "walltime=00:05:00"
-#PBS -N "fwi,x2x"
+#PBS -N "fwi.x2x"
 #PBS -l "nodes=4:ppn=16"
 #PBS -e job.err
 #PBS -o job.out
 #PBS -n
-#PBS -q deeper-sdv
+##PBS -q deeper-sdv
+#PBS -q deep
 #PBS -d .
 
 date
@@ -19,7 +20,7 @@ export CN=1
 export PPN_CN=1
 export BN=1
 export PPN_BN=1
-export WN=1
+export WN=2
 export PPN_WN=1
 
 export OMP_NUM_THREADS=$(( $PBS_NUM_PPN / $PPN_CN ))
@@ -42,4 +43,4 @@ export I_MPI_FABRICS=shm:tcp     # network driver
 export NX_OFFL_DEBUG=5           # OmpSs debug
 
 #mpiexec.hydra -hostlist $(hostname) -np 1 $FWIDIR/3_OmpSs_offload/$bin fwi_schedule.txt
-mpiexec.hydra --envall -np 1 ./fwi.intel64 fwi_schedule.txt
+mpiexec.hydra --envall -np 1 ./fwi.intel64 fwi_schedule.offload
