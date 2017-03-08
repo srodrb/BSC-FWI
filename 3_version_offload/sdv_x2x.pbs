@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l "walltime=00:05:00"
+#PBS -l "walltime=00:10:00"
 #PBS -N "fwi.x2x"
 #PBS -l "nodes=4:ppn=16"
 #PBS -e job.err
@@ -36,11 +36,11 @@ echo "First level OpenMP: number of threads $OMP_NUM_THREADS"
 echo "Second level OpenMP: number of threads $OFFL_OMP_NUM_THREADS"
 echo "Third level OpenMP: number of threads $OFFL_OFFL_OMP_NUM_THREADS"
 
-export I_MPI_DEBUG=5             # check pinning
+#export I_MPI_DEBUG=5             # check pinning
 export I_MPI_HYDRA_BOOTSTRAP=ssh # create processes over ssh
 export I_MPI_HYDRA_IFACE=eth0    # dont use ExTOLL
 export I_MPI_FABRICS=shm:tcp     # network driver
-export NX_OFFL_DEBUG=5           # OmpSs debug
+#export NX_OFFL_DEBUG=5           # OmpSs debug
 
 #mpiexec.hydra -hostlist $(hostname) -np 1 $FWIDIR/3_OmpSs_offload/$bin fwi_schedule.txt
 mpiexec.hydra --envall -np 1 ./fwi.intel64 fwi_schedule.offload

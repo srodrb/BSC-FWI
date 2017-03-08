@@ -1,0 +1,55 @@
+#!/bin/bash
+#PBS -l "walltime=01:00:00"
+#PBS -N "fwi.x2x"
+#PBS -l "nodes=6:ppn=24"
+#PBS -e job.err
+#PBS -o job.out
+#PBS -n
+#PBS -q deeper-sdv
+##PBS -q deep
+#PBS -d .
+
+date
+source environment_sdv.sh
+
+# CN: cluster nodes (master node)
+# BN: booster nodes (slave nodes)
+# WN: worker nodes (worker nodes)
+# PPN_*: (MPI) processes per node
+export CN=1
+export PPN_CN=1
+export BN=1
+export PPN_BN=1
+export WN=4
+export PPN_WN=1
+
+export OMP_NUM_THREADS=$(( $PBS_NUM_PPN / $PPN_CN ))
+export OFFL_OMP_NUM_THREADS=$(( $PBS_NUM_PPN / $PPN_BN ))
+export OFFL_OFFL_OMP_NUM_THREADS=$(( $PBS_NUM_PPN / $PPN_WN ))
+
+#export NX_ARGS="--enable-yield --spins=1 --smp-workers=1 --summary"
+export NX_ARGS="--enable-yield --spins=1 --summary"
+export OFFL_NX_ARGS="--enable-yield --spins=1 --smp-workers=24 --summary"
+export OFFL_OFFL_NX_ARGS="--enable-yield --spins=1 --smp-workers=24 --summary"
+
+export NX_DEPS=cregions
+export NX_HOSTFILE=".tmpdir/cn.hosts"
+export NX_OFFL_HOSTFILE=".tmpdir/bn.hosts"
+cat $PBS_NODEFILE | uniq > $NX_OFFL_HOSTFILE
+head -n 1 $NX_OFFL_HOSTFILE > $NX_HOSTFILE
+
+
+#echo "First level OpenMP: number of threads $OMP_NUM_THREADS"
+#echo "Second level OpenMP: number of threads $OFFL_OMP_NUM_THREADS"
+#echo "Third level OpenMP: number of threads $OFFL_OFFL_OMP_NUM_THREADS"
+
+#export I_MPI_DEBUG=5             # check pinning
+# export I_MPI_HYDRA_BOOTSTRAP=ssh # create processes over ssh
+# export I_MPI_HYDRA_IFACE=eth0    # dont use ExTOLL
+# export I_MPI_FABRICS=shm:tcp     # network driver
+#export NX_OFFL_DEBUG=5           # OmpSs debug
+
+#mpiexec.hydra -hostlist $(hostname) -np 1 $FWIDIR/3_OmpSs_offload/$bin fwi_schedule.txt
+mpiexec.hydra -hostfile $NX_HOSTFILE -np 1 ./fwi.intel64 fwi_schedule.txt
+
+date

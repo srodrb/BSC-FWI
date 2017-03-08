@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	printf("Path provided in fwi_params.txt is %s", originalfolder);
 
 #if defined(USE_NVME)
-		CHECK(sprintf( outputfolder, "/nmve/tmp/%s", originalfolder));
+		CHECK(sprintf( outputfolder, "/nvme/tmp/%s", originalfolder));
 		printf("Using NMVe local storage: %s\n", outputfolder);
 #else
 		CHECK(sprintf(outputfolder, "%s", originalfolder));

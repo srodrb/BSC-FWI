@@ -1,0 +1,14 @@
+*.pcf
+*.pvr
+*.row
+*.bin
+*.log
+*.err
+*.out
+cscope.*
+Results/*
+build/*
+.tmpdir/
+core.*
+worker.*
+gpfs.out

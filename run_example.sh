@@ -3,8 +3,8 @@
 # define configuration
 OPTION_DEBUG_VALUE=OFF
 OPTION_IO_VALUE=ON
-OPTION_NVME_VALUE=OFF
-OPTION_STATS_VALUE=ON
+OPTION_NVME_VALUE=ON
+OPTION_STATS_VALUE=OFF
 OPTION_ARCH_VALUE=generic  # values are: generic,KNL
 
 # env. variables required by the FWI code

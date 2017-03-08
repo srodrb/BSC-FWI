@@ -130,7 +130,9 @@ void create_output_volumes(char *outputfolder, integer VolumeMemory)
  */
 void create_folder(const char *folder)
 {
-    if (mkdir_p(folder) != 0) {
+    print_debug("Creating '%s'",folder);
+    
+		if (mkdir_p(folder) != 0) {
         print_error("cant create folder %s (Err code: %s)", folder, strerror(errno));
         exit(-1);
     }
