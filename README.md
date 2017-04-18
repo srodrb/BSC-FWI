@@ -25,19 +25,17 @@ We provide different scripts to set up a specific environment on different machi
 ```bash
 source FWIDIR/Scripts/<environment_file.sh>
 ```
+# Compilers and versions
+    - Intel Compiler (>= 15)
+    - GCC Compiler (6.2.0)
 
-
-version 0
-	- compilador intel 15 o superior
-	- compilador gcc 6.2.0
-
-para la version del offload
-	- module load ompss/stable
-	- module load intel/16.0.0
-	- module load gcc/6.2.0
-
-para ejecutar en KNLs
-        - fichero slurm.sh reserva una hora de nodo
-        - una vez que asigna un nodo (squeue)
-        - hacer ssh al nodo asignado (ssh knl0x, x puede ser 1 ,2 ,3, 4)
-        - ya disponible para lanzar
+NOTE: 
+1. To execute Offload in BSC machines:
+   - module load ompss/stable
+   - module load intel/16.0.0
+   - module load gcc/6.2.0
+2. To run on BSC's KNLs
+   - Use the slurm.sh file to reserve a timeslot (e.g 1 hour)
+   - Check if the job has been assigned to a node (use squeue command)
+   - Ssh to the assigned node (ssh knl0x, where x can be a number between 1 and 4)
+   - Then it is enable to run the mockup
